@@ -100,7 +100,8 @@ class ReminderBot(Plugin):
         rem = ReminderInfo(date=date, room_id=evt.room_id, message=message,
                            users={evt.sender: evt.event_id})
         rem.event_id = await evt.reply(f"I'll remind you for \"{rem.message}\""
-                                       f" {self.format_time(evt, rem)}.")
+                                       f" {self.format_time(evt, rem)}.\n\n"
+                                       f"(others can \U0001F44D this message to get pinged too)")
         self.db.insert(rem)
         now = datetime.now(tz=pytz.UTC)
         if (date - now).total_seconds() < 60 and now.minute == date.minute:
@@ -114,7 +115,7 @@ class ReminderBot(Plugin):
         if len(reminders_str) == 0:
             await evt.reply("You have no upcoming reminders :(")
         else:
-            await evt.reply(f"List of reminders:\n\n{reminders_str}")
+            await evt.reply(f"Upcoming reminders:\n\n{reminders_str}")
 
     def format_time(self, evt: MessageEvent, reminder: ReminderInfo) -> str:
         tz = self.db.get_timezone(evt.sender) or pytz.UTC
@@ -125,8 +126,8 @@ class ReminderBot(Plugin):
     async def cancel(self, evt: MessageEvent, id: int) -> None:
         reminder = self.db.get(id)
         if self.db.remove_user(reminder, evt.sender):
-            await evt.reply(f"Reminder #{reminder.id}: \"{reminder.message}\""
-                            f" {self.format_time(evt, reminder)} cancelled")
+            await evt.reply(f"Reminder for \"{reminder.message}\""
+                            f" {self.format_time(evt, reminder)} **cancelled**")
         else:
             await evt.reply("You weren't subscribed to that reminder.")
 
