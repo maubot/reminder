@@ -24,7 +24,7 @@ import dateparser
 from mautrix.types import UserID, RoomID, EventID, GenericEvent
 from mautrix.util.config import BaseProxyConfig, ConfigUpdateHelper
 from maubot import MessageEvent
-from maubot.handlers.command import Argument
+from maubot.handlers.command import Argument, ArgumentSyntaxError
 
 if TYPE_CHECKING:
     from .bot import ReminderBot
@@ -78,7 +78,7 @@ def parse_timezone(val: str) -> Optional[pytz.timezone]:
     try:
         return pytz.timezone(val)
     except pytz.UnknownTimeZoneError as e:
-        raise ValueError("Invalid time zone") from e
+        raise ArgumentSyntaxError(f"{val} is not a valid time zone.", show_usage=False) from e
 
 
 def pluralize(val: int, unit: str) -> str:
