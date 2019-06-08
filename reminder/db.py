@@ -21,7 +21,7 @@ from sqlalchemy import (Column, String, Integer, Text, DateTime, ForeignKey, Tab
                         select, and_)
 from sqlalchemy.engine.base import Engine
 
-from mautrix.types import UserID
+from mautrix.types import UserID, EventID
 
 from .util import ReminderInfo
 
@@ -44,12 +44,14 @@ class ReminderDatabase:
                               Column("id", Integer, primary_key=True, autoincrement=True),
                               Column("date", DateTime, nullable=False),
                               Column("room_id", String(255), nullable=False),
+                              Column("source_event", String(255), nullable=False),
                               Column("message", Text, nullable=False))
         self.reminder_target = Table("reminder_target", meta,
                                      Column("reminder_id", Integer,
                                             ForeignKey("reminder.id", ondelete="CASCADE"),
                                             primary_key=True),
-                                     Column("user_id", String(255), primary_key=True))
+                                     Column("user_id", String(255), primary_key=True),
+                                     Column("source_event", String(255), nullable=False))
         self.timezone = Table("timezone", meta,
                               Column("user_id", String(255), primary_key=True),
                               Column("timezone", String(255), primary_key=True))
@@ -66,7 +68,8 @@ class ReminderDatabase:
         try:
             return self.tz_cache[user_id]
         except KeyError:
-            rows = self.db.execute(self.timezone.select().where(self.timezone.c.user_id == user_id))
+            rows = self.db.execute(select([self.timezone.c.timezone])
+                                   .where(self.timezone.c.user_id == user_id))
             try:
                 self.tz_cache[user_id] = pytz.timezone(next(rows)[0])
             except (pytz.UnknownTimeZoneError, StopIteration, IndexError):
@@ -80,35 +83,44 @@ class ReminderDatabase:
                  self.reminder.c.date > datetime.now(tz=pytz.UTC))))
         for row in rows:
             yield ReminderInfo(id=row[0], date=row[1].replace(tzinfo=pytz.UTC), room_id=row[2],
-                               message=row[3], users=[user_id])
+                               source_event=row[3], message=row[4], users=[user_id])
 
     def get(self, id: int) -> Optional[ReminderInfo]:
-        rows = self.db.execute(select([self.reminder, self.reminder_target.c.user_id]).where(
-            and_(self.reminder.c.id == id,
-                 self.reminder_target.c.reminder_id == self.reminder.c.id)))
+        return self._get_one(self.reminder.c.id == id)
+
+    def get_by_event_id(self, event_id: EventID) -> Optional[ReminderInfo]:
+        return self._get_one(self.reminder.c.source_event == event_id)
+
+    def _get_one(self, whereclause) -> Optional[ReminderInfo]:
+        rows = self.db.execute(select([self.reminder, self.reminder_target.c.user_id,
+                                       self.reminder_target.c.source_event]).where(
+            and_(whereclause, self.reminder_target.c.reminder_id == self.reminder.c.id)))
         try:
             first_row = next(rows)
         except StopIteration:
             return None
         info = ReminderInfo(id=first_row[0], date=first_row[1].replace(tzinfo=pytz.UTC),
-                            room_id=first_row[2], message=first_row[3], users=[first_row[4]])
+                            room_id=first_row[2], source_event=first_row[3], message=first_row[4],
+                            users={first_row[5]: first_row[6]})
         for row in rows:
-            info.users.append(row[4])
+            info.users[row[5]] = row[6]
         return info
 
     def _get_many(self, whereclause) -> Iterator[ReminderInfo]:
-        rows = self.db.execute(select([self.reminder, self.reminder_target.c.user_id])
+        rows = self.db.execute(select([self.reminder, self.reminder_target.c.user_id,
+                                       self.reminder_target.c.source_event])
                                .where(whereclause)
                                .order_by(self.reminder.c.id, self.reminder.c.date))
         building_reminder = None
         for row in rows:
             if building_reminder is not None:
                 if building_reminder.id == row[0]:
-                    building_reminder.users.append(row[4])
+                    building_reminder.users[row[5]] = row[6]
                     continue
                 yield building_reminder
             building_reminder = ReminderInfo(id=row[0], date=row[1].replace(tzinfo=pytz.UTC),
-                                             room_id=row[2], message=row[3], users=[row[4]])
+                                             room_id=row[2], source_event=row[3], message=row[4],
+                                             users={row[5]: row[6]})
         if building_reminder is not None:
             yield building_reminder
 
@@ -124,19 +136,22 @@ class ReminderDatabase:
         with self.db.begin() as tx:
             res = tx.execute(self.reminder.insert()
                              .values(date=reminder.date, room_id=reminder.room_id,
-                                     message=reminder.message))
+                                     source_event=reminder.source_event, message=reminder.message))
             reminder.id = res.inserted_primary_key[0]
-            print([{"reminder_id": reminder.id, "user_id": user_id}
-                   for user_id in reminder.users])
             tx.execute(self.reminder_target.insert(),
-                       [{"reminder_id": reminder.id, "user_id": user_id}
-                        for user_id in reminder.users])
+                       [{"reminder_id": reminder.id, "user_id": user_id,
+                         "source_event": source_event}
+                        for user_id, source_event in reminder.users.items()])
 
-    def add_user(self, reminder: ReminderInfo, user_id: UserID) -> bool:
+    def redact_event(self, event_id: EventID) -> None:
+        self.db.execute(self.reminder_target.delete()
+                        .where(self.reminder_target.c.source_event == event_id))
+
+    def add_user(self, reminder: ReminderInfo, user_id: UserID, event_id: EventID) -> bool:
         if user_id in reminder.users:
             return False
         self.db.execute(self.reminder_target.insert()
-                        .values(reminder_id=reminder.id, user_id=user_id))
+                        .values(reminder_id=reminder.id, user_id=user_id, source_event=event_id))
         reminder.users.append(user_id)
         return True
 

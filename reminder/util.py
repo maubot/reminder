@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Optional, List, Tuple, TYPE_CHECKING
+from typing import Optional, Dict, List, Union, Tuple, TYPE_CHECKING
 from collections import deque
 from datetime import datetime
 from attr import dataclass
@@ -21,7 +21,7 @@ from attr import dataclass
 import pytz
 import dateparser
 
-from mautrix.types import UserID, RoomID
+from mautrix.types import UserID, RoomID, EventID, GenericEvent
 from mautrix.util.config import BaseProxyConfig, ConfigUpdateHelper
 from maubot import MessageEvent
 from maubot.handlers.command import Argument
@@ -69,10 +69,16 @@ class DateArgument(Argument):
         return " ".join(rem), time
 
 
+def reaction_key(evt: GenericEvent) -> None:
+    relates_to = evt.content.get("m.relates_to", None) or {}
+    return relates_to.get("key") if relates_to.get("rel_type", None) == "m.annotation" else None
+
+
 @dataclass
 class ReminderInfo:
     id: int = None
     date: datetime = None
-    message: str = None
     room_id: RoomID = None
-    users: List[UserID] = None
+    source_event: EventID = None
+    message: str = None
+    users: Union[Dict[UserID, EventID], List[UserID]] = None

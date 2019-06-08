@@ -13,19 +13,20 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Type
+from typing import Type, Tuple
 from datetime import datetime, timedelta
 from html import escape
 import asyncio
 
 import pytz
 
+from mautrix.types import EventType, GenericEvent, RedactionEvent
 from mautrix.util.config import BaseProxyConfig
 from maubot import Plugin, MessageEvent
-from maubot.handlers import command
+from maubot.handlers import command, event
 
 from .db import ReminderDatabase
-from .util import Config, ReminderInfo, DateArgument
+from .util import Config, ReminderInfo, DateArgument, reaction_key
 
 
 class ReminderBot(Plugin):
@@ -96,7 +97,8 @@ class ReminderBot(Plugin):
         if date < datetime.now(tz=pytz.UTC):
             await evt.reply(f"Sorry, {date} is in the past and I don't have a time machine :(")
             return
-        rem = ReminderInfo(date=date, room_id=evt.room_id, message=message, users=[evt.sender])
+        rem = ReminderInfo(date=date, room_id=evt.room_id, source_event=evt.event_id,
+                           message=message, users={evt.sender: evt.event_id})
         self.db.insert(rem)
         await evt.reply(f"Reminder #{rem.id}: Will remind you for \"{rem.message}\" at {rem.date}.")
         now = datetime.now(tz=pytz.UTC)
@@ -128,3 +130,14 @@ class ReminderBot(Plugin):
     async def timezone(self, evt: MessageEvent, timezone: pytz.timezone) -> None:
         self.db.set_timezone(evt.sender, timezone)
         await evt.reply(f"Set your timezone to {timezone.zone}")
+
+    @command.passive(regex=r"(?:\U0001F44D[\U0001F3FB-\U0001F3FF]?)", field=reaction_key,
+                     event_type=EventType.find("m.reaction"), msgtypes=None)
+    async def subscribe_react(self, evt: GenericEvent, _: Tuple[str]) -> None:
+        reminder = self.db.get_by_event_id(evt.content["m.relates_to"]["event_id"])
+        if reminder:
+            self.db.add_user(reminder, evt.sender, evt.event_id)
+
+    @event.on(EventType.ROOM_REDACTION)
+    async def redact(self, evt: RedactionEvent) -> None:
+        self.db.redact_event(evt.redacts)
