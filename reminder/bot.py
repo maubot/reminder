@@ -91,7 +91,7 @@ class ReminderBot(Plugin):
     @command.new(name=lambda self: self.config["base_command"],
                  help="Create a reminder", require_subcommand=False, arg_fallthrough=False)
     @DateArgument("date", required=True)
-    @command.argument("message", pass_raw=True, required=True)
+    @command.argument("message", pass_raw=True, required=False)
     async def remind(self, evt: MessageEvent, date: datetime, message: str) -> None:
         date = date.replace(microsecond=0)
         if date < datetime.now(tz=pytz.UTC):

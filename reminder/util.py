@@ -88,8 +88,8 @@ def pluralize(val: int, unit: str) -> str:
 
 
 def format_time(time: datetime) -> str:
-    now = datetime.now(tz=pytz.UTC)
-    if time - now < timedelta(days=7):
+    now = datetime.now(tz=pytz.UTC).replace(microsecond=0)
+    if time - now <= timedelta(days=7):
         delta = time - now
         parts = []
         if delta.days > 0:
@@ -105,7 +105,7 @@ def format_time(time: datetime) -> str:
         if len(parts) == 1:
             return "in " + parts[0]
         return "in " + ", ".join(parts[:-1]) + f" and {parts[-1]}"
-    return time.strftime("at %H:%M:%S on %A, %B %-d %Y %Z")
+    return time.strftime("at %H:%M:%S %Z on %A, %B %-d %Y")
 
 
 @dataclass
