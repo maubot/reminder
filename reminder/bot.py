@@ -98,7 +98,7 @@ class ReminderBot(Plugin):
             return
         rem = ReminderInfo(date=date, room_id=evt.room_id, message=message, users=[evt.sender])
         self.db.insert(rem)
-        await evt.reply(f"Reminder #{rem.id} will remind you for {rem.message} at {rem.date}.")
+        await evt.reply(f"Reminder #{rem.id}: Will remind you for \"{rem.message}\" at {rem.date}.")
         now = datetime.now(tz=pytz.UTC)
         if (date - now).total_seconds() < 60 and now.minute == date.minute:
             self.log.debug(f"Reminder {rem} is in less than a minute, scheduling now...")
@@ -106,7 +106,7 @@ class ReminderBot(Plugin):
 
     @remind.subcommand("list", help="List your reminders")
     async def list(self, evt: MessageEvent) -> None:
-        reminders_str = "\n".join(f"* {reminder.message} at {reminder.date}"
+        reminders_str = "\n".join(f"* \"{reminder.message}\" at {reminder.date}"
                                   for reminder in self.db.all_for_user(evt.sender))
         if len(reminders_str) == 0:
             await evt.reply("You have no upcoming reminders :(")
@@ -117,10 +117,13 @@ class ReminderBot(Plugin):
     @command.argument("id", parser=lambda val: int(val) if val else None, required=True)
     async def cancel(self, evt: MessageEvent, id: int) -> None:
         reminder = self.db.get(id)
-        self.db.remove_user(reminder, evt.sender)
-        await evt.reply(f"Reminder #{reminder.id}: {reminder.message} at {reminder.date} cancelled")
+        if self.db.remove_user(reminder, evt.sender):
+            await evt.reply(f"Reminder #{reminder.id}: \"{reminder.message}\" "
+                            f"at {reminder.date} cancelled")
+        else:
+            await evt.reply("You weren't subscribed to that reminder.")
 
-    @remind.subcommand("tz", help="Set your timezone", aliases=("timezone"))
+    @remind.subcommand("timezone", help="Set your timezone", aliases=("tz",))
     @command.argument("timezone", parser=pytz.timezone, required=True)
     async def timezone(self, evt: MessageEvent, timezone: pytz.timezone) -> None:
         self.db.set_timezone(evt.sender, timezone)

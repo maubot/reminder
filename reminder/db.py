@@ -132,17 +132,19 @@ class ReminderDatabase:
                        [{"reminder_id": reminder.id, "user_id": user_id}
                         for user_id in reminder.users])
 
-    def add_user(self, reminder: ReminderInfo, user_id: UserID) -> None:
+    def add_user(self, reminder: ReminderInfo, user_id: UserID) -> bool:
         if user_id in reminder.users:
-            return
+            return False
         self.db.execute(self.reminder_target.insert()
                         .values(reminder_id=reminder.id, user_id=user_id))
         reminder.users.append(user_id)
+        return True
 
-    def remove_user(self, reminder: ReminderInfo, user_id: UserID) -> None:
+    def remove_user(self, reminder: ReminderInfo, user_id: UserID) -> bool:
         if user_id not in reminder.users:
-            return
+            return False
         self.db.execute(self.reminder_target.delete().where(
             and_(self.reminder_target.c.reminder_id == reminder.id,
                  self.reminder_target.c.user_id == user_id)))
         reminder.users.remove(user_id)
+        return True
