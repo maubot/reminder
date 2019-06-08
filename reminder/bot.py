@@ -20,7 +20,7 @@ import asyncio
 
 import pytz
 
-from mautrix.types import EventType, GenericEvent, RedactionEvent, UserID
+from mautrix.types import EventType, GenericEvent, RedactionEvent, StateEvent
 from mautrix.util.config import BaseProxyConfig
 from maubot import Plugin, MessageEvent
 from maubot.handlers import command, event
@@ -162,3 +162,8 @@ class ReminderBot(Plugin):
     @event.on(EventType.ROOM_REDACTION)
     async def redact(self, evt: RedactionEvent) -> None:
         self.db.redact_event(evt.redacts)
+
+    @event.on(EventType.ROOM_TOMBSTONE)
+    async def tombstone(self, evt: StateEvent) -> None:
+        self.db.update_room_id(evt.room_id, evt.content.replacement_room)
+        await self.client.join_room(evt.content.replacement_room)

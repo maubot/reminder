@@ -18,10 +18,10 @@ from datetime import datetime
 
 import pytz
 from sqlalchemy import (Column, String, Integer, Text, DateTime, ForeignKey, Table, MetaData,
-                        select, and_, or_)
+                        select, and_)
 from sqlalchemy.engine.base import Engine
 
-from mautrix.types import UserID, EventID
+from mautrix.types import UserID, EventID, RoomID
 
 from .util import ReminderInfo
 
@@ -93,7 +93,7 @@ class ReminderDatabase:
         if reminder:
             return reminder
         rows = self.db.execute(select([self.reminder_target.c.reminder_id])
-                        .where(self.reminder_target.c.event_id == event_id))
+                               .where(self.reminder_target.c.event_id == event_id))
         try:
             reminder_id = int(next(rows)[0])
             return self.get(reminder_id)
@@ -151,6 +151,11 @@ class ReminderDatabase:
                        [{"reminder_id": reminder.id, "user_id": user_id,
                          "event_id": event_id}
                         for user_id, event_id in reminder.users.items()])
+
+    def update_room_id(self, old: RoomID, new: RoomID) -> None:
+        self.db.execute(self.reminder.update()
+                        .where(self.reminder.c.room_id == old)
+                        .values(room_id=new))
 
     def redact_event(self, event_id: EventID) -> None:
         self.db.execute(self.reminder_target.delete()
