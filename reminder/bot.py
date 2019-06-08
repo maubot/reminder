@@ -108,6 +108,19 @@ class ReminderBot(Plugin):
             self.log.debug(f"Reminder {rem} is in less than a minute, scheduling now...")
             asyncio.ensure_future(self.send_reminder(rem), loop=self.loop)
 
+    @remind.subcommand("help", help="Usage instructions")
+    async def help(self, evt: MessageEvent) -> None:
+        base = self.config["base_command"]
+        await evt.reply(f"Maubot [Reminder](https://github.com/maubot/reminder) plugin.\n\n"
+                        f"* !{base} <date> <message> - Add a reminder\n"
+                        f"* !{base} list - Get a list of your reminders\n"
+                        f"* !{base} tz <timezone> - Set your time zone\n\n"
+                        "<date> can be a real date in any sensible format or a time delta such as "
+                        "\"2 hours and 5 minutes\"\n\n"
+                        "To get mentioned by a reminder added by someone else, upvote the message "
+                        "by reacting with \U0001F44D.\n\n"
+                        "To cancel a reminder, remove the message or reaction.")
+
     @remind.subcommand("list", help="List your reminders")
     async def list(self, evt: MessageEvent) -> None:
         reminders_str = "\n".join(f"* \"{reminder.message}\" {self.format_time(evt, reminder)}"
