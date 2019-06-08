@@ -1,0 +1,13 @@
+maubot: 0.1.0
+id: xyz.maubot.reminder
+version: 0.1.0
+license: AGPL-3.0-or-later
+modules:
+- reminder
+main_class: ReminderBot
+extra_files:
+- base-config.yaml
+dependencies:
+- dateparser>=0.7.1,<0.8
+- pytz
+database: true

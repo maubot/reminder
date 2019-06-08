@@ -1,0 +1,2 @@
+# Base command without the prefix (!).
+base_command: remind
