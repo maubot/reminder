@@ -114,8 +114,14 @@ class ReminderBot(Plugin):
             await evt.reply(f"List of reminders:\n\n{reminders_str}")
 
     @remind.subcommand("cancel", help="Cancel a reminder", aliases=("delete", "remove", "rm"))
-    @command.argument("id", parser=lambda val: int(val) if val else None)
+    @command.argument("id", parser=lambda val: int(val) if val else None, required=True)
     async def cancel(self, evt: MessageEvent, id: int) -> None:
         reminder = self.db.get(id)
         self.db.remove_user(reminder, evt.sender)
         await evt.reply(f"Reminder #{reminder.id}: {reminder.message} at {reminder.date} cancelled")
+
+    @remind.subcommand("tz", help="Set your timezone", aliases=("timezone"))
+    @command.argument("timezone", parser=pytz.timezone, required=True)
+    async def timezone(self, evt: MessageEvent, timezone: pytz.timezone) -> None:
+        self.db.set_timezone(evt.sender, timezone)
+        await evt.reply(f"Set your timezone to {timezone.zone}")

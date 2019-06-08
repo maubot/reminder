@@ -35,6 +35,7 @@ class ReminderDatabase:
 
     def __init__(self, db: Engine) -> None:
         self.db = db
+        self.tz_cache = {}
 
         meta = MetaData()
         meta.bind = db
@@ -56,7 +57,9 @@ class ReminderDatabase:
         meta.create_all()
 
     def set_timezone(self, user_id: UserID, tz: pytz.timezone) -> None:
-        self.db.execute(self.timezone.insert().values(user_id=user_id, timezone=tz.zone))
+        with self.db.begin() as tx:
+            tx.execute(self.timezone.delete().where(self.timezone.c.user_id == user_id))
+            tx.execute(self.timezone.insert().values(user_id=user_id, timezone=tz.zone))
         self.tz_cache[user_id] = tz
 
     def get_timezone(self, user_id: UserID) -> Optional[pytz.timezone]:
