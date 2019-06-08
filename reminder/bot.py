@@ -118,8 +118,7 @@ class ReminderBot(Plugin):
             await evt.reply(f"Upcoming reminders:\n\n{reminders_str}")
 
     def format_time(self, evt: MessageEvent, reminder: ReminderInfo) -> str:
-        tz = self.db.get_timezone(evt.sender) or pytz.UTC
-        return format_time(reminder.date.astimezone(tz))
+        return format_time(reminder.date.astimezone(self.db.get_timezone(evt.sender)))
 
     @remind.subcommand("cancel", help="Cancel a reminder", aliases=("delete", "remove", "rm"))
     @command.argument("id", parser=lambda val: int(val) if val else None, required=True)
@@ -132,8 +131,11 @@ class ReminderBot(Plugin):
             await evt.reply("You weren't subscribed to that reminder.")
 
     @remind.subcommand("timezone", help="Set your timezone", aliases=("tz",))
-    @command.argument("timezone", parser=parse_timezone, required=True)
+    @command.argument("timezone", parser=parse_timezone, required=False)
     async def timezone(self, evt: MessageEvent, timezone: pytz.timezone) -> None:
+        if not timezone:
+            await evt.reply(f"Your time zone is {self.db.get_timezone(evt.sender).zone}")
+            return
         self.db.set_timezone(evt.sender, timezone)
         await evt.reply(f"Set your timezone to {timezone.zone}")
 

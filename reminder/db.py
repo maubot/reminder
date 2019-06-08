@@ -73,7 +73,7 @@ class ReminderDatabase:
             try:
                 self.tz_cache[user_id] = pytz.timezone(next(rows)[0])
             except (pytz.UnknownTimeZoneError, StopIteration, IndexError):
-                self.tz_cache[user_id] = None
+                self.tz_cache[user_id] = pytz.UTC
             return self.tz_cache[user_id]
 
     def all_for_user(self, user_id: UserID) -> Iterator[ReminderInfo]:

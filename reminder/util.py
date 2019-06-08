@@ -49,9 +49,7 @@ class DateArgument(Argument):
         }
 
         if instance:
-            tz = instance.db.get_timezone(evt.sender)
-            if tz:
-                parser_settings["TIMEZONE"] = tz.zone
+            parser_settings["TIMEZONE"] = instance.db.get_timezone(evt.sender).zone
 
         time = None
         parts = [part for part in val.split(" ") if len(part) > 0] + [""]
@@ -75,6 +73,8 @@ def reaction_key(evt: GenericEvent) -> None:
 
 
 def parse_timezone(val: str) -> Optional[pytz.timezone]:
+    if not val:
+        return None
     try:
         return pytz.timezone(val)
     except pytz.UnknownTimeZoneError as e:
