@@ -76,11 +76,14 @@ class ReminderDatabase:
                 self.tz_cache[user_id] = pytz.UTC
             return self.tz_cache[user_id]
 
-    def all_for_user(self, user_id: UserID) -> Iterator[ReminderInfo]:
-        rows = self.db.execute(select([self.reminder]).where(
-            and_(self.reminder.c.id == self.reminder_target.c.reminder_id,
+    def all_for_user(self, user_id: UserID, room_id: Optional[RoomID] = None
+                     ) -> Iterator[ReminderInfo]:
+        where = [self.reminder.c.id == self.reminder_target.c.reminder_id,
                  self.reminder_target.c.user_id == user_id,
-                 self.reminder.c.date > datetime.now(tz=pytz.UTC))))
+                 self.reminder.c.date > datetime.now(tz=pytz.UTC)]
+        if room_id:
+            where.append(self.reminder.c.room_id == room_id)
+        rows = self.db.execute(select([self.reminder]).where(and_(*where)))
         for row in rows:
             yield ReminderInfo(id=row[0], date=row[1].replace(tzinfo=pytz.UTC), room_id=row[2],
                                event_id=row[3], message=row[4], users=[user_id])

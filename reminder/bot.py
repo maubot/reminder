@@ -122,13 +122,21 @@ class ReminderBot(Plugin):
                         "To cancel a reminder, remove the message or reaction.")
 
     @remind.subcommand("list", help="List your reminders")
-    async def list(self, evt: MessageEvent) -> None:
+    @command.argument("all", required=False)
+    async def list(self, evt: MessageEvent, all: str) -> None:
+        room_id = evt.room_id
+        if "all" in all:
+            room_id = None
         reminders_str = "\n".join(f"* \"{reminder.message}\" {self.format_time(evt, reminder)}"
-                                  for reminder in self.db.all_for_user(evt.sender))
+                                  for reminder in self.db.all_for_user(evt.sender, room_id=room_id))
+        message = "upcoming reminders"
+        if room_id:
+            message += " in this room"
         if len(reminders_str) == 0:
-            await evt.reply("You have no upcoming reminders :(")
+            await evt.reply(f"You have no {message} :(")
         else:
-            await evt.reply(f"Upcoming reminders:\n\n{reminders_str}")
+            message = "U" + message[1:]
+            await evt.reply(f"{message}:\n\n{reminders_str}")
 
     def format_time(self, evt: MessageEvent, reminder: ReminderInfo) -> str:
         return format_time(reminder.date.astimezone(self.db.get_timezone(evt.sender)))
