@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Optional, Dict, List, Union, Tuple, TYPE_CHECKING
 from collections import deque
-from datetime import datetime
+from datetime import datetime, timedelta
 from attr import dataclass
 
 import pytz
@@ -74,11 +74,45 @@ def reaction_key(evt: GenericEvent) -> None:
     return relates_to.get("key") if relates_to.get("rel_type", None) == "m.annotation" else None
 
 
+def parse_timezone(val: str) -> Optional[pytz.timezone]:
+    try:
+        return pytz.timezone(val)
+    except pytz.UnknownTimeZoneError as e:
+        raise ValueError("Invalid time zone") from e
+
+
+def pluralize(val: int, unit: str) -> str:
+    if val == 1:
+        return f"{val} {unit}"
+    return f"{val} {unit}s"
+
+
+def format_time(time: datetime) -> str:
+    now = datetime.now(tz=pytz.UTC)
+    if time - now < timedelta(days=7):
+        delta = time - now
+        parts = []
+        if delta.days > 0:
+            parts.append(pluralize(delta.days, "day"))
+        hours, seconds = divmod(delta.seconds, 60)
+        hours, minutes = divmod(hours, 60)
+        if hours > 0:
+            parts.append(pluralize(hours, "hour"))
+        if minutes > 0:
+            parts.append(pluralize(minutes, "minute"))
+        if seconds > 0:
+            parts.append(pluralize(seconds, "second"))
+        if len(parts) == 1:
+            return "in " + parts[0]
+        return "in " + ", ".join(parts[:-1]) + f" and {parts[-1]}"
+    return time.strftime("at %H:%M:%S on %A, %B %-d %Y %Z")
+
+
 @dataclass
 class ReminderInfo:
     id: int = None
     date: datetime = None
     room_id: RoomID = None
-    source_event: EventID = None
+    event_id: EventID = None
     message: str = None
     users: Union[Dict[UserID, EventID], List[UserID]] = None

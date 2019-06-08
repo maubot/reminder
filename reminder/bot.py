@@ -20,13 +20,13 @@ import asyncio
 
 import pytz
 
-from mautrix.types import EventType, GenericEvent, RedactionEvent
+from mautrix.types import EventType, GenericEvent, RedactionEvent, UserID
 from mautrix.util.config import BaseProxyConfig
 from maubot import Plugin, MessageEvent
 from maubot.handlers import command, event
 
 from .db import ReminderDatabase
-from .util import Config, ReminderInfo, DateArgument, reaction_key
+from .util import Config, ReminderInfo, DateArgument, reaction_key, parse_timezone, format_time
 
 
 class ReminderBot(Plugin):
@@ -97,10 +97,11 @@ class ReminderBot(Plugin):
         if date < datetime.now(tz=pytz.UTC):
             await evt.reply(f"Sorry, {date} is in the past and I don't have a time machine :(")
             return
-        rem = ReminderInfo(date=date, room_id=evt.room_id, source_event=evt.event_id,
-                           message=message, users={evt.sender: evt.event_id})
+        rem = ReminderInfo(date=date, room_id=evt.room_id, message=message,
+                           users={evt.sender: evt.event_id})
+        rem.event_id = await evt.reply(f"I'll remind you for \"{rem.message}\""
+                                       f" {self.format_time(evt, rem)}.")
         self.db.insert(rem)
-        await evt.reply(f"Reminder #{rem.id}: Will remind you for \"{rem.message}\" at {rem.date}.")
         now = datetime.now(tz=pytz.UTC)
         if (date - now).total_seconds() < 60 and now.minute == date.minute:
             self.log.debug(f"Reminder {rem} is in less than a minute, scheduling now...")
@@ -108,25 +109,29 @@ class ReminderBot(Plugin):
 
     @remind.subcommand("list", help="List your reminders")
     async def list(self, evt: MessageEvent) -> None:
-        reminders_str = "\n".join(f"* \"{reminder.message}\" at {reminder.date}"
+        reminders_str = "\n".join(f"* \"{reminder.message}\" {self.format_time(evt, reminder)}"
                                   for reminder in self.db.all_for_user(evt.sender))
         if len(reminders_str) == 0:
             await evt.reply("You have no upcoming reminders :(")
         else:
             await evt.reply(f"List of reminders:\n\n{reminders_str}")
 
+    def format_time(self, evt: MessageEvent, reminder: ReminderInfo) -> str:
+        tz = self.db.get_timezone(evt.sender) or pytz.UTC
+        return format_time(reminder.date.astimezone(tz))
+
     @remind.subcommand("cancel", help="Cancel a reminder", aliases=("delete", "remove", "rm"))
     @command.argument("id", parser=lambda val: int(val) if val else None, required=True)
     async def cancel(self, evt: MessageEvent, id: int) -> None:
         reminder = self.db.get(id)
         if self.db.remove_user(reminder, evt.sender):
-            await evt.reply(f"Reminder #{reminder.id}: \"{reminder.message}\" "
-                            f"at {reminder.date} cancelled")
+            await evt.reply(f"Reminder #{reminder.id}: \"{reminder.message}\""
+                            f" {self.format_time(evt, reminder)} cancelled")
         else:
             await evt.reply("You weren't subscribed to that reminder.")
 
     @remind.subcommand("timezone", help="Set your timezone", aliases=("tz",))
-    @command.argument("timezone", parser=pytz.timezone, required=True)
+    @command.argument("timezone", parser=parse_timezone, required=True)
     async def timezone(self, evt: MessageEvent, timezone: pytz.timezone) -> None:
         self.db.set_timezone(evt.sender, timezone)
         await evt.reply(f"Set your timezone to {timezone.zone}")
