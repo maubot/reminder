@@ -94,11 +94,15 @@ class ReminderBot(Plugin):
     @command.argument("message", pass_raw=True, required=False)
     async def remind(self, evt: MessageEvent, date: datetime, message: str) -> None:
         date = date.replace(microsecond=0)
-        if date < datetime.now(tz=pytz.UTC):
+        now = datetime.now(tz=pytz.UTC).replace(microsecond=0)
+        if date < now:
             await evt.reply(f"Sorry, {date} is in the past and I don't have a time machine :(")
             return
         rem = ReminderInfo(date=date, room_id=evt.room_id, message=message,
                            users={evt.sender: evt.event_id})
+        if date == now:
+            await self.send_reminder(rem)
+            return
         rem.event_id = await evt.reply(f"I'll remind you for \"{rem.message}\""
                                        f" {self.format_time(evt, rem)}.\n\n"
                                        f"(others can \U0001F44D this message to get pinged too)")
@@ -135,8 +139,7 @@ class ReminderBot(Plugin):
         if len(reminders_str) == 0:
             await evt.reply(f"You have no {message} :(")
         else:
-            message = "U" + message[1:]
-            await evt.reply(f"{message}:\n\n{reminders_str}")
+            await evt.reply(f"Your {message}:\n\n{reminders_str}")
 
     def format_time(self, evt: MessageEvent, reminder: ReminderInfo) -> str:
         return format_time(reminder.date.astimezone(self.db.get_timezone(evt.sender)))
