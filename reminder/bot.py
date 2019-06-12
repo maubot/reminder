@@ -32,6 +32,8 @@ from .util import Config, ReminderInfo, DateArgument, reaction_key, parse_timezo
 class ReminderBot(Plugin):
     db: ReminderDatabase
     reminder_loop_task: asyncio.Future
+    base_command: str
+    base_aliases: Tuple[str, ...]
 
     @classmethod
     def get_config_class(cls) -> Type[BaseProxyConfig]:
@@ -39,9 +41,15 @@ class ReminderBot(Plugin):
 
     async def start(self) -> None:
         await super().start()
-        self.config.load_and_update()
+        self.on_external_config_update()
         self.db = ReminderDatabase(self.database)
         self.reminder_loop_task = asyncio.ensure_future(self.reminder_loop(), loop=self.loop)
+
+    def on_external_config_update(self) -> None:
+        self.config.load_and_update()
+        bc = self.config["base_command"]
+        self.base_command = bc[0] if isinstance(bc, list) else bc
+        self.base_aliases = tuple(bc) if isinstance(bc, list) else (bc,)
 
     async def stop(self) -> None:
         await super().stop()
@@ -88,7 +96,8 @@ class ReminderBot(Plugin):
         html = f"{users_html}: {escape(reminder.message)}"
         await self.client.send_text(reminder.room_id, text=text, html=html)
 
-    @command.new(name=lambda self: self.config["base_command"],
+    @command.new(name=lambda self: self.base_command,
+                 aliases=lambda self, alias: alias in self.base_aliases,
                  help="Create a reminder", require_subcommand=False, arg_fallthrough=False)
     @DateArgument("date", required=True)
     @command.argument("message", pass_raw=True, required=False)

@@ -1,2 +1,5 @@
 # Base command without the prefix (!).
-base_command: remind
+# If a list is provided, the first is the main name and the rest are aliases.
+base_command:
+- remind
+- reminder
