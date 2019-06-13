@@ -186,4 +186,5 @@ class ReminderBot(Plugin):
     @event.on(EventType.ROOM_TOMBSTONE)
     async def tombstone(self, evt: StateEvent) -> None:
         self.db.update_room_id(evt.room_id, evt.content.replacement_room)
-        await self.client.join_room(evt.content.replacement_room)
+        _, server = self.client.parse_user_id(evt.sender)
+        await self.client.join_room(evt.content.replacement_room, servers=[server])
