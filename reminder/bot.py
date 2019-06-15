@@ -120,7 +120,7 @@ class ReminderBot(Plugin):
         if rem.reply_to:
             evt_link = f"[event](https://matrix.to/#/{rem.room_id}/{rem.reply_to})"
             if rem.message:
-                remind_type += f"to {rem.message} (replying to {evt_link})"
+                remind_type += f"to {rem.message} (replying to that {evt_link})"
             else:
                 remind_type += f"about that {evt_link}"
         elif rem.message:
