@@ -115,4 +115,5 @@ class ReminderInfo:
     room_id: RoomID = None
     event_id: EventID = None
     message: str = None
+    reply_to: EventID = None
     users: Union[Dict[UserID, EventID], List[UserID]] = None

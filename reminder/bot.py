@@ -20,7 +20,8 @@ import asyncio
 
 import pytz
 
-from mautrix.types import EventType, GenericEvent, RedactionEvent, StateEvent
+from mautrix.types import (EventType, GenericEvent, RedactionEvent, StateEvent, Format, MessageType,
+                           TextMessageEventContent)
 from mautrix.util.config import BaseProxyConfig
 from maubot import Plugin, MessageEvent
 from maubot.handlers import command, event
@@ -92,9 +93,12 @@ class ReminderBot(Plugin):
         users = " ".join(reminder.users)
         users_html = " ".join(f"<a href='https://matrix.to/#/{user_id}'>{user_id}</a>"
                               for user_id in reminder.users)
-        text = f"{users}: {reminder.message}"
-        html = f"{users_html}: {escape(reminder.message)}"
-        await self.client.send_text(reminder.room_id, text=text, html=html)
+        content = TextMessageEventContent(
+            msgtype=MessageType.TEXT, body=f"{users}: {reminder.message}", format=Format.HTML,
+            formatted_body=f"{users_html}: {escape(reminder.message)}")
+        if reminder.reply_to:
+            content.set_reply(await self.client.get_event(reminder.room_id, reminder.reply_to))
+        await self.client.send_message(reminder.room_id, content)
 
     @command.new(name=lambda self: self.base_command,
                  aliases=lambda self, alias: alias in self.base_aliases,
@@ -108,13 +112,25 @@ class ReminderBot(Plugin):
             await evt.reply(f"Sorry, {date} is in the past and I don't have a time machine :(")
             return
         rem = ReminderInfo(date=date, room_id=evt.room_id, message=message,
-                           users={evt.sender: evt.event_id})
+                           reply_to=evt.content.get_reply_to(), users={evt.sender: evt.event_id})
         if date == now:
             await self.send_reminder(rem)
             return
-        rem.event_id = await evt.reply(f"I'll remind you for \"{rem.message}\""
-                                       f" {self.format_time(evt, rem)}.\n\n"
-                                       f"(others can \U0001F44D this message to get pinged too)")
+        remind_type = "remind you "
+        if rem.reply_to:
+            evt_link = f"[event](https://matrix.to/#/{rem.room_id}/{rem.reply_to})"
+            if rem.message:
+                remind_type += f"to {rem.message} (replying to {evt_link})"
+            else:
+                remind_type += f"about that {evt_link}"
+        elif rem.message:
+            remind_type += f"to {rem.message}"
+        else:
+            remind_type = "ping you"
+            rem.message = "ping"
+        msg = (f"I'll {remind_type} {self.format_time(evt, rem)}.\n\n"
+               f"(others can \U0001F44D this message to get pinged too)")
+        rem.event_id = await evt.reply(msg)
         self.db.insert(rem)
         now = datetime.now(tz=pytz.UTC)
         if (date - now).total_seconds() < 60 and now.minute == date.minute:
@@ -140,7 +156,18 @@ class ReminderBot(Plugin):
         room_id = evt.room_id
         if "all" in all:
             room_id = None
-        reminders_str = "\n".join(f"* \"{reminder.message}\" {self.format_time(evt, reminder)}"
+
+        def format_rem(rem: ReminderInfo) -> str:
+            if rem.reply_to:
+                evt_link = f"[event](https://matrix.to/#/{rem.room_id}/{rem.reply_to})"
+                if rem.message:
+                    return f'"{rem.message}" (replying to {evt_link})'
+                else:
+                    return evt_link
+            else:
+                return f'"{rem.message}"'
+
+        reminders_str = "\n".join(f"* {format_rem(reminder)} {self.format_time(evt, reminder)}"
                                   for reminder in self.db.all_for_user(evt.sender, room_id=room_id))
         message = "upcoming reminders"
         if room_id:

@@ -45,7 +45,8 @@ class ReminderDatabase:
                               Column("date", DateTime, nullable=False),
                               Column("room_id", String(255), nullable=False),
                               Column("event_id", String(255), nullable=False),
-                              Column("message", Text, nullable=False))
+                              Column("message", Text, nullable=False),
+                              Column("reply_to", String(255), nullable=True))
         self.reminder_target = Table("reminder_target", meta,
                                      Column("reminder_id", Integer,
                                             ForeignKey("reminder.id", ondelete="CASCADE"),
@@ -86,7 +87,7 @@ class ReminderDatabase:
         rows = self.db.execute(select([self.reminder]).where(and_(*where)))
         for row in rows:
             yield ReminderInfo(id=row[0], date=row[1].replace(tzinfo=pytz.UTC), room_id=row[2],
-                               event_id=row[3], message=row[4], users=[user_id])
+                               event_id=row[3], message=row[4], reply_to=row[5], users=[user_id])
 
     def get(self, id: int) -> Optional[ReminderInfo]:
         return self._get_one(self.reminder.c.id == id)
@@ -113,9 +114,9 @@ class ReminderDatabase:
             return None
         info = ReminderInfo(id=first_row[0], date=first_row[1].replace(tzinfo=pytz.UTC),
                             room_id=first_row[2], event_id=first_row[3], message=first_row[4],
-                            users={first_row[5]: first_row[6]})
+                            reply_to=first_row[5], users={first_row[6]: first_row[7]})
         for row in rows:
-            info.users[row[5]] = row[6]
+            info.users[row[6]] = row[7]
         return info
 
     def _get_many(self, whereclause) -> Iterator[ReminderInfo]:
@@ -132,7 +133,7 @@ class ReminderDatabase:
                 yield building_reminder
             building_reminder = ReminderInfo(id=row[0], date=row[1].replace(tzinfo=pytz.UTC),
                                              room_id=row[2], event_id=row[3], message=row[4],
-                                             users={row[5]: row[6]})
+                                             reply_to=row[5], users={row[6]: row[7]})
         if building_reminder is not None:
             yield building_reminder
 
@@ -148,7 +149,8 @@ class ReminderDatabase:
         with self.db.begin() as tx:
             res = tx.execute(self.reminder.insert()
                              .values(date=reminder.date, room_id=reminder.room_id,
-                                     event_id=reminder.event_id, message=reminder.message))
+                                     event_id=reminder.event_id, message=reminder.message,
+                                     reply_to=reminder.reply_to))
             reminder.id = res.inserted_primary_key[0]
             tx.execute(self.reminder_target.insert(),
                        [{"reminder_id": reminder.id, "user_id": user_id,
