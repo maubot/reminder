@@ -58,12 +58,18 @@ class DateArgument(Argument):
             if len(parts) == 0:
                 return val, None
             rem.appendleft(parts.pop())
-            time = dateparser.parse(" ".join(parts), settings=parser_settings)
+            try:
+                time = dateparser.parse(" ".join(parts), settings=parser_settings)
+            except OverflowError:
+                pass
         if time < datetime.now(tz=pytz.UTC) and parts[0] != "in":
             parts.insert(0, "in")
-            in_time = dateparser.parse(" ".join(parts), settings=parser_settings)
-            if in_time:
-                time = in_time
+            try:
+                in_time = dateparser.parse(" ".join(parts), settings=parser_settings)
+                if in_time:
+                    time = in_time
+            except OverflowError:
+                pass
         return " ".join(rem), time
 
 
