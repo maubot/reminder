@@ -21,13 +21,13 @@ import asyncio
 import pytz
 
 from mautrix.types import (EventType, GenericEvent, RedactionEvent, StateEvent, Format, MessageType,
-                           TextMessageEventContent)
+                           TextMessageEventContent, ReactionEvent)
 from mautrix.util.config import BaseProxyConfig
 from maubot import Plugin, MessageEvent
 from maubot.handlers import command, event
 
 from .db import ReminderDatabase
-from .util import Config, ReminderInfo, DateArgument, reaction_key, parse_timezone, format_time
+from .util import Config, ReminderInfo, DateArgument, parse_timezone, format_time
 
 
 class ReminderBot(Plugin):
@@ -199,10 +199,11 @@ class ReminderBot(Plugin):
         self.db.set_timezone(evt.sender, timezone)
         await evt.reply(f"Set your timezone to {timezone.zone}")
 
-    @command.passive(regex=r"(?:\U0001F44D[\U0001F3FB-\U0001F3FF]?)", field=reaction_key,
-                     event_type=EventType.find("m.reaction"), msgtypes=None)
-    async def subscribe_react(self, evt: GenericEvent, _: Tuple[str]) -> None:
-        reminder = self.db.get_by_event_id(evt.content["m.relates_to"]["event_id"])
+    @command.passive(regex=r"(?:\U0001F44D[\U0001F3FB-\U0001F3FF]?)",
+                     field=lambda evt: evt.content.relates_to.key,
+                     event_type=EventType.REACTION, msgtypes=None)
+    async def subscribe_react(self, evt: ReactionEvent, _: Tuple[str]) -> None:
+        reminder = self.db.get_by_event_id(evt.content.relates_to.event_id)
         if reminder:
             self.db.add_user(reminder, evt.sender, evt.event_id)
 

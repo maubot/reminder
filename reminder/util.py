@@ -21,7 +21,7 @@ from attr import dataclass
 import pytz
 import dateparser
 
-from mautrix.types import UserID, RoomID, EventID, GenericEvent
+from mautrix.types import UserID, RoomID, EventID
 from mautrix.util.config import BaseProxyConfig, ConfigUpdateHelper
 from maubot import MessageEvent
 from maubot.handlers.command import Argument, ArgumentSyntaxError
@@ -71,11 +71,6 @@ class DateArgument(Argument):
             except OverflowError:
                 pass
         return " ".join(rem), time
-
-
-def reaction_key(evt: GenericEvent) -> None:
-    relates_to = evt.content.get("m.relates_to", None) or {}
-    return relates_to.get("key") if relates_to.get("rel_type", None) == "m.annotation" else None
 
 
 def parse_timezone(val: str) -> Optional[pytz.timezone]:
