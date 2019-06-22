@@ -139,11 +139,10 @@ class ReminderBot(Plugin):
 
     @remind.subcommand("help", help="Usage instructions")
     async def help(self, evt: MessageEvent) -> None:
-        base = self.config["base_command"]
         await evt.reply(f"Maubot [Reminder](https://github.com/maubot/reminder) plugin.\n\n"
-                        f"* !{base} <date> <message> - Add a reminder\n"
-                        f"* !{base} list - Get a list of your reminders\n"
-                        f"* !{base} tz <timezone> - Set your time zone\n\n"
+                        f"* !{self.base_command} <date> <message> - Add a reminder\n"
+                        f"* !{self.base_command} list - Get a list of your reminders\n"
+                        f"* !{self.base_command} tz <timezone> - Set your time zone\n\n"
                         "<date> can be a real date in any sensible format or a time delta such as "
                         "\"2 hours and 5 minutes\"\n\n"
                         "To get mentioned by a reminder added by someone else, upvote the message "
