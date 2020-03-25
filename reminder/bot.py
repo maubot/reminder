@@ -20,7 +20,7 @@ import asyncio
 
 import pytz
 
-from mautrix.types import (EventType, GenericEvent, RedactionEvent, StateEvent, Format, MessageType,
+from mautrix.types import (EventType, RedactionEvent, StateEvent, Format, MessageType,
                            TextMessageEventContent, ReactionEvent)
 from mautrix.util.config import BaseProxyConfig
 from maubot import Plugin, MessageEvent
