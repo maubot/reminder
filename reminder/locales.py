@@ -30,9 +30,10 @@ locales["en_iso"] = Locale(
                            rf"(?:(?P<days>[-+]?\d+)\s?d(?:ays?)?{td_sep_en})?"
                            rf"(?:(?P<hours>[-+]?\d+)\s?h(?:(?:r|our)?s?){td_sep_en})?"
                            rf"(?:(?P<minutes>[-+]?\d+)\s?m(?:in(?:ute)?s?)?{td_sep_en})?"
-                           r"(?:(?P<seconds>[-+]?\d+)\s?s(?:ec(?:ond)?s?)?)?"),
-    date=RegexMatcher(r"(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})"),
-    weekday=WeekdayMatcher(pattern=r"today"
+                           r"(?:(?P<seconds>[-+]?\d+)\s?s(?:ec(?:ond)?s?)?)?"
+                           r"(?:\s|$)"),
+    date=RegexMatcher(r"(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})\s"),
+    weekday=WeekdayMatcher(pattern=r"(?:today"
                                    r"|tomorrow"
                                    r"|mon(?:day)?"
                                    r"|tues?(?:day)?"
@@ -40,7 +41,8 @@ locales["en_iso"] = Locale(
                                    r"|thu(?:rs(?:day)?)?"
                                    r"|fri(?:day)?"
                                    r"|sat(?:urday)?"
-                                   r"|sun(?:day)?",
+                                   r"|sun(?:day)?)"
+                                   r"(?:\s|$)",
                            map={
                                "tod": +0, "tom": +1, "mon": MO, "tue": TU, "wed": WE, "thu": TH,
                                "fri": FR, "sat": SA, "sun": SU,
@@ -48,22 +50,24 @@ locales["en_iso"] = Locale(
     time=RegexMatcher(r"\s?(?:at\s)?"
                       r"(?P<hour>\d{2})"
                       r"[:.](?P<minute>\d{2})"
-                      r"(?:[:.](?P<second>\d{2}))?"),
+                      r"(?:[:.](?P<second>\d{2}))?"
+                      r"(?:\s|$)"),
 )
 
 time_12_en = TimeMatcher(r"\s?(?:at\s)?"
                          r"(?P<hour>\d{2})"
                          r"(?:[:.](?P<minute>\d{2}))?"
                          r"(?:[:.](?P<second>\d{2}))?"
-                         r"(?:\s(?P<meridiem>a\.?m|p\.?m)\.?)?")
+                         r"(?:\s(?P<meridiem>a\.?m|p\.?m)\.?)?"
+                         r"(?:\s|$)")
 
 locales["en_us"] = locales["en_iso"].replace(
-    name="English (US)", time=time_12_en,
-    date=ShortYearMatcher(r"(?P<month>\d{1,2})/(?P<day>\d{1,2})(?:/(?P<year>\d{2}(?:\d{2})?))?"))
+    name="English (US)", time=time_12_en, date=ShortYearMatcher(
+        r"(?P<month>\d{1,2})/(?P<day>\d{1,2})(?:/(?P<year>\d{2}(?:\d{2})?))?(?:\s|$)"))
 
 locales["en_uk"] = locales["en_iso"].replace(
-    name="English (UK)", time=time_12_en,
-    date=ShortYearMatcher(r"(?P<day>\d{1,2})/(?P<month>\d{1,2})(?:/(?P<year>\d{2}(?:\d{2})?))?"))
+    name="English (UK)", time=time_12_en, date=ShortYearMatcher(
+        r"(?P<day>\d{1,2})/(?P<month>\d{1,2})(?:/(?P<year>\d{2}(?:\d{2})?))?(?:\s|$)"))
 
 td_sep_fi = r"(?:[\s,]{1,3}(?:ja\s)?)"
 locales["fi_fi"] = Locale(
@@ -75,8 +79,9 @@ locales["fi_fi"] = Locale(
                            rf"(?:(?P<hours>[-+]?\d+)\s?t(?:un(?:nin?|tia))?{td_sep_fi})?"
                            rf"(?:(?P<minutes>[-+]?\d+)\s?m(?:in(?:uut(?:in?|tia))?)?{td_sep_fi})?"
                            r"(?:(?P<seconds>[-+]?\d+)\s?s(?:ek(?:un(?:nin?|tia))?)?)?"
-                           r"(?:\s(?:kuluttua|päästä?))?"),
-    date=ShortYearMatcher(r"(?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{2}(?:\d{2})?)"),
+                           r"(?:\s(?:kuluttua|päästä?))?"
+                           r"(?:\s|$)"),
+    date=ShortYearMatcher(r"(?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{2}(?:\d{2})?)\s"),
     weekday=WeekdayMatcher(pattern=r"(?:tänään"
                                    r"|(?:yli)?huomen"
                                    r"|ma(?:aanantai)?"
@@ -86,7 +91,8 @@ locales["fi_fi"] = Locale(
                                    r"|pe(?:rjantai)?"
                                    r"|la(?:uantai)?"
                                    r"|su(?:nnuntai)?)"
-                                   r"(?:na)?",
+                                   r"(?:na)?"
+                                   r"(?:\s|$)",
                            map={
                                "tä": +0, "hu": +1, "yl": +2,
                                "ma": MO, "ti": TU, "ke": WE, "to": TH, "pe": FR, "la": SA, "su": SU,
@@ -94,7 +100,8 @@ locales["fi_fi"] = Locale(
     time=RegexMatcher(r"\s?(?:ke?ll?o\.?\s)?"
                       r"(?P<hour>\d{2})"
                       r"[:.](?P<minute>\d{2})"
-                      r"(?:[:.](?P<second>\d{2}))?"),
+                      r"(?:[:.](?P<second>\d{2}))?"
+                      r"(?:\s|$)"),
 )
 
 td_sep_de = r"(?:[\s,]{1,3}(?:und\s)?)"
@@ -108,7 +115,8 @@ locales["de_de"] = Locale(
                            rf"(?:(?P<hours>[-+]?\d+)\s?stunden?{td_sep_de})?"
                            rf"(?:(?P<minutes>[-+]?\d+)\s?minuten?{td_sep_de})?"
                            r"(?:(?P<seconds>[-+]?\d+)\s?sekunden?)?"),
-    date=ShortYearMatcher(r"(?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{2}(?:\d{2})?)"),
+    date=ShortYearMatcher(
+        r"(?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{2}(?:\d{2})?)(?:\s|$)"),
     weekday=WeekdayMatcher(pattern=r"(?:heute"
                                    r"|(?:über)?morgen"
                                    r"|mo(?:ntag)?"
@@ -117,7 +125,8 @@ locales["de_de"] = Locale(
                                    r"|do(?:nnerstag)?"
                                    r"|fr(?:eitag)?"
                                    r"|sa(?:mstag)?"
-                                   r"|so(?:nntag)?)",
+                                   r"|so(?:nntag)?)"
+                                   r"(?:\s|$)",
                            map={
                                "heu": +0, "mor": +1, "übe": +2, "mon": MO, "die": TU, "mit": WE,
                                "don": TH, "fre": FR, "sam": SA, "son": SU,
@@ -125,5 +134,6 @@ locales["de_de"] = Locale(
     time=RegexMatcher(r"\s?(?:um\s)?"
                       r"(?P<hour>\d{2})"
                       r"[:.](?P<minute>\d{2})"
-                      r"(?:[:.](?P<second>\d{2}))?"),
+                      r"(?:[:.](?P<second>\d{2}))?"
+                      r"(?:\s|$)"),
 )

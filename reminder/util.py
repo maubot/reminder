@@ -37,31 +37,6 @@ class Config(BaseProxyConfig):
         helper.copy("base_command")
 
 
-timedelta_regex = re.compile(r"(?:(?P<years>[-+]?\d+)\s?y(?:ears?)?\s?)?"
-                             r"(?:(?P<months>[-+]?\d+)\s?months?\s?)?"
-                             r"(?:(?P<weeks>[-+]?\d+)\s?w(?:eeks?)?\s?)?"
-                             r"(?:(?P<days>[-+]?\d+)\s?d(?:ays?)?\s?)?"
-                             r"(?:(?P<hours>[-+]?\d+)\s?h(?:ours?)?\s?)?"
-                             r"(?:(?P<minutes>[-+]?\d+)\s?m(?:inutes?)?\s?)?"
-                             r"(?:(?P<seconds>[-+]?\d+)\s?s(?:econds?)?\s?)?",
-                             flags=re.IGNORECASE)
-date_regex = re.compile(r"(?P<year>\d{4})-(?P<month>\d{1,2})-(?P<day>\d{1,2})")
-day_regex = re.compile(r"today"
-                       r"|tomorrow"
-                       r"|mon(?:day)?"
-                       r"|tues?(?:day)?"
-                       r"|wed(?:nesday)?"
-                       r"|thu(?:rs(?:day)?)?"
-                       r"|fri(?:day)?"
-                       r"|sat(?:urday)?"
-                       r"|sun(?:day)?",
-                       flags=re.IGNORECASE)
-time_regex = re.compile(r"(?:\sat\s)?(?P<hour>\d{2})"
-                        r"[:.](?P<minute>\d{2})"
-                        r"(?:[:.](?P<second>\d{2}))?",
-                        flags=re.IGNORECASE)
-
-
 class DateArgument(Argument):
     def __init__(self, name: str, label: str = None, *, required: bool = False):
         super().__init__(name, label=label, required=required, pass_raw=True)
@@ -79,7 +54,7 @@ class DateArgument(Argument):
             match = locale.match(val)
             if match:
                 date = (datetime.now(tz=tz) + relativedelta(**match.params)).astimezone(pytz.UTC)
-                return val[match.end:], date
+                return match.unconsumed, date
         return val, None
 
 
