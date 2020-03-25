@@ -78,7 +78,8 @@ class DateArgument(Argument):
         for locale in use_locales:
             match = locale.match(val)
             if match:
-                return val[match.end:], datetime.now(tz=tz) + relativedelta(**match.params)
+                date = (datetime.now(tz=tz) + relativedelta(**match.params)).astimezone(pytz.UTC)
+                return val[match.end:], date
         return val, None
 
 
