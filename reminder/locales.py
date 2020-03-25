@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from dateutil.relativedelta import MO, TU, WE, TH, FR, SA, SU
 
-from .locale_util import Locales, Locale, RegexMatcher, WeekdayMatcher
+from .locale_util import Locales, Locale, RegexMatcher, WeekdayMatcher, TimeMatcher
 
 locales: Locales = {}
 
@@ -47,15 +47,21 @@ locales["en_iso"] = Locale(
     time=RegexMatcher(r"\s?(?:at\s)?"
                       r"(?P<hour>\d{2})"
                       r"[:.](?P<minute>\d{2})"
-                      r"(?:[:.](?P<second>\d{2}))?")
+                      r"(?:[:.](?P<second>\d{2}))?"),
 )
 
+time_12_en = TimeMatcher(r"\s?(?:at\s)?"
+                         r"(?P<hour>\d{2})"
+                         r"(?:[:.](?P<minute>\d{2}))?"
+                         r"(?:[:.](?P<second>\d{2}))?"
+                         r"(?:\s(?P<meridiem>a\.?m|p\.?m)\.?)?")
+
 locales["en_us"] = locales["en_iso"].replace(
-    name="English (US)",
+    name="English (US)", time=time_12_en,
     date=RegexMatcher(r"(?P<month>\d{1,2})/(?P<day>\d{1,2})(?:/(?P<year>\d{4}))?"))
 
 locales["en_uk"] = locales["en_iso"].replace(
-    name="English (UK)",
+    name="English (UK)", time=time_12_en,
     date=RegexMatcher(r"(?P<day>\d{1,2})/(?P<month>\d{1,2})(?:/(?P<year>\d{4}))?"))
 
 td_sep_fi = r"(?:[\s,]{1,3}(?:ja\s)?)"

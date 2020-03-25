@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import NamedTuple, Union, Pattern, Dict, Type, Optional, TYPE_CHECKING
+from typing import NamedTuple, Union, Pattern, Match, Dict, Type, Optional, TYPE_CHECKING
 from datetime import datetime
 from abc import ABC, abstractmethod
 import re
@@ -73,10 +73,30 @@ class RegexMatcher(Matcher):
     def match(self, val: str, start: int = 0) -> Optional[MatcherReturn]:
         match = self.regex.match(val, pos=start)
         if match and match.end() > 0:
-            return MatcherReturn(params={key: self.value_type(value)
-                                         for key, value in match.groupdict().items() if value},
-                                 end=match.end())
+            return self._convert_match(match)
         return None
+
+    def _convert_match(self, match: Match) -> MatcherReturn:
+        return MatcherReturn(params=self._convert_groups(match.groupdict()),
+                             end=match.end())
+
+    def _convert_groups(self, groups: Dict[str, str]) -> 'RelativeDeltaParams':
+        return {key: self.value_type(value) for key, value in groups.items() if value}
+
+
+class TimeMatcher(RegexMatcher):
+    def _convert_match(self, match: Match) -> MatcherReturn:
+        groups = match.groupdict()
+        try:
+            meridiem = groups.pop("meridiem").lower()
+        except KeyError:
+            meridiem = None
+        params = self._convert_groups(groups)
+        if meridiem == "pm":
+            params["hour"] += 12
+        elif meridiem == "am" and params["hour"] == 12:
+            params["hour"] = 0
+        return MatcherReturn(params=params, end=match.end())
 
 
 class WeekdayMatcher(Matcher):
