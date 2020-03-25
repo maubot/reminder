@@ -143,8 +143,8 @@ class ReminderBot(Plugin):
                         f"* !{self.base_command} <date> <message> - Add a reminder\n"
                         f"* !{self.base_command} list - Get a list of your reminders\n"
                         f"* !{self.base_command} tz <timezone> - Set your time zone\n\n"
-                        "<date> can be a real date in any sensible format or a time delta such as "
-                        "2 hours and 5 minutes\n\n"
+                        "<date> can be a time delta (e.g. `2 days 1.5 hours` or `friday at 15:00`) "
+                        "or an absolute date (e.g. `2020-03-27 15:00`)\n\n"
                         "To get mentioned by a reminder added by someone else, upvote the message "
                         "by reacting with \U0001F44D.\n\n"
                         "To cancel a reminder, remove the message or reaction.")
