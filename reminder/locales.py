@@ -15,7 +15,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from dateutil.relativedelta import MO, TU, WE, TH, FR, SA, SU
 
-from .locale_util import Locales, Locale, RegexMatcher, WeekdayMatcher, TimeMatcher
+from .locale_util import (Locales, Locale, RegexMatcher,
+                          WeekdayMatcher, TimeMatcher, ShortYearMatcher)
 
 locales: Locales = {}
 
@@ -58,11 +59,11 @@ time_12_en = TimeMatcher(r"\s?(?:at\s)?"
 
 locales["en_us"] = locales["en_iso"].replace(
     name="English (US)", time=time_12_en,
-    date=RegexMatcher(r"(?P<month>\d{1,2})/(?P<day>\d{1,2})(?:/(?P<year>\d{4}))?"))
+    date=ShortYearMatcher(r"(?P<month>\d{1,2})/(?P<day>\d{1,2})(?:/(?P<year>\d{2}(?:\d{2})?))?"))
 
 locales["en_uk"] = locales["en_iso"].replace(
     name="English (UK)", time=time_12_en,
-    date=RegexMatcher(r"(?P<day>\d{1,2})/(?P<month>\d{1,2})(?:/(?P<year>\d{4}))?"))
+    date=ShortYearMatcher(r"(?P<day>\d{1,2})/(?P<month>\d{1,2})(?:/(?P<year>\d{2}(?:\d{2})?))?"))
 
 td_sep_fi = r"(?:[\s,]{1,3}(?:ja\s)?)"
 locales["fi_fi"] = Locale(
@@ -75,7 +76,7 @@ locales["fi_fi"] = Locale(
                            rf"(?:(?P<minutes>[-+]?\d+)\s?m(?:in(?:uut(?:in?|tia))?)?{td_sep_fi})?"
                            r"(?:(?P<seconds>[-+]?\d+)\s?s(?:ek(?:un(?:nin?|tia))?)?)?"
                            r"(?:\s(?:kuluttua|päästä?))?"),
-    date=RegexMatcher(r"(?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{4})"),
+    date=ShortYearMatcher(r"(?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{2}(?:\d{2})?)"),
     weekday=WeekdayMatcher(pattern=r"(?:tänään"
                                    r"|(?:yli)?huomen"
                                    r"|ma(?:aanantai)?"
@@ -107,7 +108,7 @@ locales["de_de"] = Locale(
                            rf"(?:(?P<hours>[-+]?\d+)\s?stunden?{td_sep_de})?"
                            rf"(?:(?P<minutes>[-+]?\d+)\s?minuten?{td_sep_de})?"
                            r"(?:(?P<seconds>[-+]?\d+)\s?sekunden?)?"),
-    date=RegexMatcher(r"(?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{4})"),
+    date=ShortYearMatcher(r"(?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{2}(?:\d{2})?)"),
     weekday=WeekdayMatcher(pattern=r"(?:heute"
                                    r"|(?:über)?morgen"
                                    r"|mo(?:ntag)?"

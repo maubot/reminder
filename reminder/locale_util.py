@@ -99,6 +99,18 @@ class TimeMatcher(RegexMatcher):
         return MatcherReturn(params=params, end=match.end())
 
 
+class ShortYearMatcher(RegexMatcher):
+    def _convert_match(self, match: Match) -> MatcherReturn:
+        rtrn = super()._convert_match(match)
+        if rtrn.params["year"] < 100:
+            year = datetime.now().year
+            current_century = year // 100
+            if rtrn.params["year"] < year % 100:
+                current_century += 1
+            rtrn.params["year"] = (current_century * 100) + rtrn.params["year"]
+        return rtrn
+
+
 class WeekdayMatcher(Matcher):
     regex: Pattern
     map: Dict[str, Union[int, WeekdayType]]
