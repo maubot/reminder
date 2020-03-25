@@ -20,6 +20,7 @@ but anything supported by Pytz will work.
 Similarly, you can set the locale for date parsing with `!remind locale <list of locales>`. If you
 provide multiple locales, each one will be tried for parsing your input until one matches. Unlike
 the timezone, the locale only affects input, not output. You can view available locales using
-`!remind locales`. You can also contribute new locales by making a pull request (see [locales.py](reminder/locales.py), content warning: long regexes).
+`!remind locales`. You can also contribute new locales by making a pull request
+(see [locales.py](reminder/locales.py), content warning: long regexes).
 
 To list your upcoming reminders, use `!remind list`
