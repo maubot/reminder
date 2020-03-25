@@ -88,10 +88,40 @@ locales["fi_fi"] = Locale(
                                    r"(?:na)?",
                            map={
                                "tä": +0, "hu": +1, "yl": +2,
-                               "ma": MO, "ti": TU, "ke": WE, "to": TH, "pe": FR, "la": SA,
-                               "su": SU,
+                               "ma": MO, "ti": TU, "ke": WE, "to": TH, "pe": FR, "la": SA, "su": SU,
                            }, substr=2),
     time=RegexMatcher(r"\s?(?:ke?ll?o\.?\s)?"
+                      r"(?P<hour>\d{2})"
+                      r"[:.](?P<minute>\d{2})"
+                      r"(?:[:.](?P<second>\d{2}))?"),
+)
+
+td_sep_de = r"(?:[\s,]{1,3}(?:und\s)?)"
+locales["de_de"] = Locale(
+    name="German",
+    timedelta=RegexMatcher(rf"(?:in\s)?"
+                           rf"(?:(?P<years>[-+]?\d+)\s?jahr(?:en)?{td_sep_de})?"
+                           rf"(?:(?P<months>[-+]?\d+)\s?monat(?:en)?{td_sep_de})?"
+                           rf"(?:(?P<weeks>[-+]?\d+)\s?wochen?{td_sep_de})?"
+                           rf"(?:(?P<days>[-+]?\d+)\s?tag(?:en)?{td_sep_de})?"
+                           rf"(?:(?P<hours>[-+]?\d+)\s?stunden?{td_sep_de})?"
+                           rf"(?:(?P<minutes>[-+]?\d+)\s?minuten?{td_sep_de})?"
+                           r"(?:(?P<seconds>[-+]?\d+)\s?sekunden?)?"),
+    date=RegexMatcher(r"(?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{4})"),
+    weekday=WeekdayMatcher(pattern=r"(?:heute"
+                                   r"|(?:über)?morgen"
+                                   r"|mo(?:ntag)?"
+                                   r"|di(?:enstag)?"
+                                   r"|mi(?:ttwoch)?"
+                                   r"|do(?:nnerstag)?"
+                                   r"|fr(?:eitag)?"
+                                   r"|sa(?:mstag)?"
+                                   r"|so(?:nntag)?)",
+                           map={
+                               "heu": +0, "mor": +1, "übe": +2, "mon": MO, "die": TU, "mit": WE,
+                               "don": TH, "fre": FR, "sam": SA, "son": SU,
+                           }, substr=3),
+    time=RegexMatcher(r"\s?(?:um\s)?"
                       r"(?P<hour>\d{2})"
                       r"[:.](?P<minute>\d{2})"
                       r"(?:[:.](?P<second>\d{2}))?"),
