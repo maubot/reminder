@@ -194,7 +194,10 @@ class ReminderDatabase:
             return False
         self.db.execute(self.reminder_target.insert()
                         .values(reminder_id=reminder.id, user_id=user_id, event_id=event_id))
-        reminder.users.append(user_id)
+        if isinstance(reminder.users, list):
+            reminder.users.append(user_id)
+        elif isinstance(reminder.users, dict):
+            reminder.users[user_id] = event_id
         return True
 
     def remove_user(self, reminder: ReminderInfo, user_id: UserID) -> bool:
