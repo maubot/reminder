@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Type, Tuple
+from typing import Type, Tuple, List
 from datetime import datetime, timedelta
 from html import escape
 import asyncio
@@ -28,6 +28,7 @@ from maubot.handlers import command, event
 
 from .db import ReminderDatabase
 from .util import Config, ReminderInfo, DateArgument, parse_timezone, format_time
+from .locales import locales
 
 
 class ReminderBot(Plugin):
@@ -142,7 +143,9 @@ class ReminderBot(Plugin):
         await evt.reply(f"Maubot [Reminder](https://github.com/maubot/reminder) plugin.\n\n"
                         f"* !{self.base_command} <date> <message> - Add a reminder\n"
                         f"* !{self.base_command} list - Get a list of your reminders\n"
-                        f"* !{self.base_command} tz <timezone> - Set your time zone\n\n"
+                        f"* !{self.base_command} tz <timezone> - Set your time zone\n"
+                        f"* !{self.base_command} locale <locale> - Set your locale\n"
+                        f"* !{self.base_command} locales - List available locales\n\n"
                         "<date> can be a time delta (e.g. `2 days 1.5 hours` or `friday at 15:00`) "
                         "or an absolute date (e.g. `2020-03-27 15:00`)\n\n"
                         "To get mentioned by a reminder added by someone else, upvote the message "
@@ -178,6 +181,40 @@ class ReminderBot(Plugin):
 
     def format_time(self, evt: MessageEvent, reminder: ReminderInfo) -> str:
         return format_time(reminder.date.astimezone(self.db.get_timezone(evt.sender)))
+
+    @remind.subcommand("locales", help="List available locales")
+    async def locales(self, evt: MessageEvent) -> None:
+        def _format_key(key: str) -> str:
+            language, country = key.split("_")
+            return f"{language.lower()}_{country.upper()}"
+
+        await evt.reply("Available locales:\n\n" +
+                        "\n".join(f"* `{_format_key(key)}` - {locale.name}"
+                                  for key, locale in locales.items()))
+
+    @staticmethod
+    def _fmt_locales(locale_ids: List[str]) -> str:
+        locale_names = [locales[id].name for id in locale_ids]
+        if len(locale_names) == 0:
+            return "unset"
+        elif len(locale_names) == 1:
+            return locale_names[0]
+        else:
+            return ", ".join(locale_names[:-1]) + " and " + locale_names[-1]
+
+    @remind.subcommand("locale", help="Set your locale")
+    @command.argument("locale", required=False, pass_raw=True)
+    async def locale(self, evt: MessageEvent, locale: str) -> None:
+        if not locale:
+            await evt.reply(f"Your locale is {self._fmt_locales(self.db.get_locales(evt.sender))}")
+            return
+        locale_ids = [part.strip() for part in locale.lower().split(" ")]
+        for locale_id in locale_ids:
+            if locale_id not in locales:
+                await evt.reply(f"Locale `{locale_id}` is not supported")
+                return
+        self.db.set_locales(evt.sender, locale_ids)
+        await evt.reply(f"Set your locale to {self._fmt_locales(locale_ids)}")
 
     @remind.subcommand("timezone", help="Set your timezone", aliases=("tz",))
     @command.argument("timezone", parser=parse_timezone, required=False)

@@ -26,6 +26,8 @@ from mautrix.util.config import BaseProxyConfig, ConfigUpdateHelper
 from maubot import MessageEvent
 from maubot.handlers.command import Argument, ArgumentSyntaxError
 
+from .locales import locales
+
 if TYPE_CHECKING:
     from .bot import ReminderBot
 
@@ -67,39 +69,17 @@ class DateArgument(Argument):
     def match(self, val: str, evt: MessageEvent = None, instance: 'ReminderBot' = None
               ) -> Tuple[str, Optional[datetime]]:
         tz = pytz.UTC
+        use_locales = [locales["en_iso"]]
         if instance:
             tz = instance.db.get_timezone(evt.sender)
+            locale_ids = instance.db.get_locales(evt.sender)
+            use_locales = [locales[id] for id in locale_ids if id in locales]
 
-        found_delta = timedelta_regex.match(val)
-        end = 0
-        if found_delta.end() > 0:
-            params = {k: float(v) for k, v in found_delta.groupdict().items() if v}
-            end = found_delta.end()
-        else:
-            params = {}
-            found_day = day_regex.match(val)
-            if found_day:
-                end = found_day.end()
-                params["weekday"] = {
-                    "tod": datetime.now().weekday(), "tom": datetime.now().weekday() + 1,
-                    "mon": 0, "tue": 1, "wed": 2, "thu": 3, "fri": 4, "sat": 5, "sun": 6,
-                }[found_day.string[:3].lower()]
-            else:
-                found_date = date_regex.match(val)
-                if found_date:
-                    end = found_date.end()
-                    params = {k: int(v) for k, v in found_delta.groupdict().items() if v}
-
-            found_time = time_regex.match(val, pos=end)
-            if found_time:
-                params = {
-                    **params,
-                    **{k: int(v) for k, v in found_time.groupdict().items() if v}
-                }
-                end = found_time.end()
-
-        return val[end:], ((datetime.now(tz=tz) + relativedelta(**params))
-                           if len(params) > 0 else None)
+        for locale in use_locales:
+            match = locale.match(val)
+            if match:
+                return val[match.end:], datetime.now(tz=tz) + relativedelta(**match.params)
+        return val, None
 
 
 def parse_timezone(val: str) -> Optional[pytz.timezone]:

@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Optional, Iterator, Dict
+from typing import Optional, Iterator, Dict, List
 from datetime import datetime
 
 import pytz
@@ -31,11 +31,13 @@ class ReminderDatabase:
     reminder_target: Table
     timezone: Table
     tz_cache: Dict[UserID, pytz.timezone]
+    locale_cache: Dict[UserID, List[str]]
     db: Engine
 
     def __init__(self, db: Engine) -> None:
         self.db = db
         self.tz_cache = {}
+        self.locale_cache = {}
 
         meta = MetaData()
         meta.bind = db
@@ -55,7 +57,10 @@ class ReminderDatabase:
                                      Column("event_id", String(255), nullable=False))
         self.timezone = Table("timezone", meta,
                               Column("user_id", String(255), primary_key=True),
-                              Column("timezone", String(255), primary_key=True))
+                              Column("timezone", String(255), nullable=False))
+        self.locale = Table("locale", meta,
+                            Column("user_id", String(255), primary_key=True),
+                            Column("locales", String(255), nullable=False))
 
         meta.create_all()
 
@@ -76,6 +81,24 @@ class ReminderDatabase:
             except (pytz.UnknownTimeZoneError, StopIteration, IndexError):
                 self.tz_cache[user_id] = pytz.UTC
             return self.tz_cache[user_id]
+
+    def set_locales(self, user_id: UserID, locales: List[str]) -> None:
+        with self.db.begin() as tx:
+            tx.execute(self.locale.delete().where(self.locale.c.user_id == user_id))
+            tx.execute(self.locale.insert().values(user_id=user_id, locales=",".join(locales)))
+        self.locale_cache[user_id] = locales
+
+    def get_locales(self, user_id: UserID) -> List[str]:
+        try:
+            return self.locale_cache[user_id]
+        except KeyError:
+            rows = self.db.execute(select([self.locale.c.locales])
+                                   .where(self.locale.c.user_id == user_id))
+            try:
+                self.locale_cache[user_id] = next(rows)[0].split(",")
+            except (StopIteration, IndexError):
+                self.locale_cache[user_id] = ["en_iso"]
+            return self.locale_cache[user_id]
 
     def all_for_user(self, user_id: UserID, room_id: Optional[RoomID] = None
                      ) -> Iterator[ReminderInfo]:
