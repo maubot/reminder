@@ -20,7 +20,7 @@ from .locale_util import (Locales, Locale, RegexMatcher,
 
 locales: Locales = {}
 
-td_sep_en = r"(?:[\s,]{1,3}(?:and\s)?)"
+td_sep_en = r"(?:[\s,]{1,3}(?:and\s)?)?"
 locales["en_iso"] = Locale(
     name="English (ISO)",
     timedelta=RegexMatcher(r"(?:(?:in|after)\s)?"
@@ -69,7 +69,7 @@ locales["en_uk"] = locales["en_iso"].replace(
     name="English (UK)", time=time_12_en, date=ShortYearMatcher(
         r"(?P<day>\d{1,2})/(?P<month>\d{1,2})(?:/(?P<year>\d{2}(?:\d{2})?))?(?:\s|$)"))
 
-td_sep_fi = r"(?:[\s,]{1,3}(?:ja\s)?)"
+td_sep_fi = r"(?:[\s,]{1,3}(?:ja\s)?)?"
 locales["fi_fi"] = Locale(
     name="Finnish",
     timedelta=RegexMatcher(rf"(?:(?P<years>[-+]?\d+)\s?v(?:uo(?:tta|den))?{td_sep_fi})?"
@@ -104,7 +104,7 @@ locales["fi_fi"] = Locale(
                       r"(?:\s|$)"),
 )
 
-td_sep_de = r"(?:[\s,]{1,3}(?:und\s)?)"
+td_sep_de = r"(?:[\s,]{1,3}(?:und\s)?)?"
 locales["de_de"] = Locale(
     name="German",
     timedelta=RegexMatcher(rf"(?:in\s)?"
