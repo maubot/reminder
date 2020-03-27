@@ -151,7 +151,7 @@ class ReminderDatabase:
         for row in rows:
             if building_reminder is not None:
                 if building_reminder.id == row[0]:
-                    building_reminder.users[row[5]] = row[6]
+                    building_reminder.users[row[6]] = row[7]
                     continue
                 yield building_reminder
             building_reminder = ReminderInfo(id=row[0], date=row[1].replace(tzinfo=pytz.UTC),
