@@ -110,11 +110,12 @@ locales["de_de"] = Locale(
     timedelta=RegexMatcher(rf"(?:in\s)?"
                            rf"(?:(?P<years>[-+]?\d+)\s?jahr(?:en)?{td_sep_de})?"
                            rf"(?:(?P<months>[-+]?\d+)\s?monat(?:en)?{td_sep_de})?"
-                           rf"(?:(?P<weeks>[-+]?\d+)\s?wochen?{td_sep_de})?"
-                           rf"(?:(?P<days>[-+]?\d+)\s?tag(?:en)?{td_sep_de})?"
-                           rf"(?:(?P<hours>[-+]?\d+)\s?stunden?{td_sep_de})?"
-                           rf"(?:(?P<minutes>[-+]?\d+)\s?minuten?{td_sep_de})?"
-                           r"(?:(?P<seconds>[-+]?\d+)\s?sekunden?)?"),
+                           rf"(?:(?P<weeks>[-+]?\d+)\s?woche(?:n)?{td_sep_de})?"
+                           rf"(?:(?P<days>[-+]?\d+)\s?tag(?:e(?:n))?{td_sep_de})?"
+                           rf"(?:(?P<hours>[-+]?\d+)\s?stunde(?:n)?{td_sep_de})?"
+                           rf"(?:(?P<minutes>[-+]?\d+)\s?minute(?:n)?{td_sep_de})?"
+                           r"(?:(?P<seconds>[-+]?\d+)\s?sekunde(?:n)?)?"
+                           r"(?:\s|$)"),
     date=ShortYearMatcher(
         r"(?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{2}(?:\d{2})?)(?:\s|$)"),
     weekday=WeekdayMatcher(pattern=r"(?:heute"
