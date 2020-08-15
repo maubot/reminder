@@ -115,7 +115,8 @@ locales["de_de"] = Locale(
                            rf"(?:(?P<days>{number})\s?tag(?:en)?{td_sep_de})?"
                            rf"(?:(?P<hours>{number})\s?stunden?{td_sep_de})?"
                            rf"(?:(?P<minutes>{number})\s?minuten?{td_sep_de})?"
-                           rf"(?:(?P<seconds>{number})\s?sekunden?)?"),
+                           rf"(?:(?P<seconds>{number})\s?sekunden?)?"
+                           r"(?:\s|$)"),
     date=ShortYearMatcher(
         r"(?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{2}(?:\d{2})?)(?:\s|$)"),
     weekday=WeekdayMatcher(pattern=r"(?:heute"
