@@ -21,16 +21,17 @@ from .locale_util import (Locales, Locale, RegexMatcher,
 locales: Locales = {}
 
 td_sep_en = r"(?:[\s,]{1,3}(?:and\s)?)?"
+number = r"[+-]?\d+(?:[.,]\d+)?"
 locales["en_iso"] = Locale(
     name="English (ISO)",
     timedelta=RegexMatcher(r"(?:(?:in|after)\s)?"
-                           rf"(?:(?P<years>[-+]?\d+)\s?y(?:r|ears?)?{td_sep_en})?"
-                           rf"(?:(?P<months>[-+]?\d+)\s?mo(?:nths?)?{td_sep_en})?"
-                           rf"(?:(?P<weeks>[-+]?\d+)\s?w(?:k|eeks?)?{td_sep_en})?"
-                           rf"(?:(?P<days>[-+]?\d+)\s?d(?:ays?)?{td_sep_en})?"
-                           rf"(?:(?P<hours>[-+]?\d+)\s?h(?:(?:r|our)?s?){td_sep_en})?"
-                           rf"(?:(?P<minutes>[-+]?\d+)\s?m(?:in(?:ute)?s?)?{td_sep_en})?"
-                           r"(?:(?P<seconds>[-+]?\d+)\s?s(?:ec(?:ond)?s?)?)?"
+                           rf"(?:(?P<years>{number})\s?y(?:r|ear)?s?{td_sep_en})?"
+                           rf"(?:(?P<months>{number})\s?mo(?:nth)?s?{td_sep_en})?"
+                           rf"(?:(?P<weeks>{number})\s?w(?:k|eek)?s?{td_sep_en})?"
+                           rf"(?:(?P<days>{number})\s?d(?:ays?)?{td_sep_en})?"
+                           rf"(?:(?P<hours>{number})\s?h(?:(?:r|our)?s?){td_sep_en})?"
+                           rf"(?:(?P<minutes>{number})\s?m(?:in(?:ute)?s?)?{td_sep_en})?"
+                           rf"(?:(?P<seconds>{number})\s?s(?:ec(?:ond)?s?)?)?"
                            r"(?:\s|$)"),
     date=RegexMatcher(r"(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})\s"),
     weekday=WeekdayMatcher(pattern=r"(?:today"
@@ -72,13 +73,13 @@ locales["en_uk"] = locales["en_iso"].replace(
 td_sep_fi = r"(?:[\s,]{1,3}(?:ja\s)?)?"
 locales["fi_fi"] = Locale(
     name="Finnish",
-    timedelta=RegexMatcher(rf"(?:(?P<years>[-+]?\d+)\s?v(?:uo(?:tta|den))?{td_sep_fi})?"
-                           rf"(?:(?P<months>[-+]?\d+)\s?k(?:k|uukau(?:si|tta|den))?{td_sep_fi})?"
-                           rf"(?:(?P<weeks>[-+]?\d+)\s?v(?:k|iikk?o[an]?){td_sep_fi})?"
-                           rf"(?:(?P<days>[-+]?\d+)\s?p(?:v|äivä[än]?){td_sep_fi})?"
-                           rf"(?:(?P<hours>[-+]?\d+)\s?t(?:un(?:nin?|tia))?{td_sep_fi})?"
-                           rf"(?:(?P<minutes>[-+]?\d+)\s?m(?:in(?:uut(?:in?|tia))?)?{td_sep_fi})?"
-                           r"(?:(?P<seconds>[-+]?\d+)\s?s(?:ek(?:un(?:nin?|tia))?)?)?"
+    timedelta=RegexMatcher(rf"(?:(?P<years>{number})\s?v(?:uo(?:tta|den))?{td_sep_fi})?"
+                           rf"(?:(?P<months>{number})\s?k(?:k|uukau(?:si|tta|den))?{td_sep_fi})?"
+                           rf"(?:(?P<weeks>{number})\s?v(?:k|iikk?o[an]?){td_sep_fi})?"
+                           rf"(?:(?P<days>{number})\s?p(?:v|äivä[än]?){td_sep_fi})?"
+                           rf"(?:(?P<hours>{number})\s?t(?:un(?:nin?|tia))?{td_sep_fi})?"
+                           rf"(?:(?P<minutes>{number})\s?m(?:in(?:uut(?:in?|tia))?)?{td_sep_fi})?"
+                           rf"(?:(?P<seconds>{number})\s?s(?:ek(?:un(?:nin?|tia))?)?)?"
                            r"(?:\s(?:kuluttua|päästä?))?"
                            r"(?:\s|$)"),
     date=ShortYearMatcher(r"(?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{2}(?:\d{2})?)\s"),
@@ -108,13 +109,13 @@ td_sep_de = r"(?:[\s,]{1,3}(?:und\s)?)?"
 locales["de_de"] = Locale(
     name="German",
     timedelta=RegexMatcher(rf"(?:in\s)?"
-                           rf"(?:(?P<years>[-+]?\d+)\s?jahr(?:en)?{td_sep_de})?"
-                           rf"(?:(?P<months>[-+]?\d+)\s?monat(?:en)?{td_sep_de})?"
-                           rf"(?:(?P<weeks>[-+]?\d+)\s?wochen?{td_sep_de})?"
-                           rf"(?:(?P<days>[-+]?\d+)\s?tag(?:en)?{td_sep_de})?"
-                           rf"(?:(?P<hours>[-+]?\d+)\s?stunden?{td_sep_de})?"
-                           rf"(?:(?P<minutes>[-+]?\d+)\s?minuten?{td_sep_de})?"
-                           r"(?:(?P<seconds>[-+]?\d+)\s?sekunden?)?"),
+                           rf"(?:(?P<years>{number})\s?jahr(?:en)?{td_sep_de})?"
+                           rf"(?:(?P<months>{number})\s?monat(?:en)?{td_sep_de})?"
+                           rf"(?:(?P<weeks>{number})\s?wochen?{td_sep_de})?"
+                           rf"(?:(?P<days>{number})\s?tag(?:en)?{td_sep_de})?"
+                           rf"(?:(?P<hours>{number})\s?stunden?{td_sep_de})?"
+                           rf"(?:(?P<minutes>{number})\s?minuten?{td_sep_de})?"
+                           rf"(?:(?P<seconds>{number})\s?sekunden?)?"),
     date=ShortYearMatcher(
         r"(?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{2}(?:\d{2})?)(?:\s|$)"),
     weekday=WeekdayMatcher(pattern=r"(?:heute"

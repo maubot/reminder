@@ -62,11 +62,19 @@ class Matcher(ABC):
         pass
 
 
+def int_or_float(val: str) -> Union[int, float]:
+    if "," in val:
+        return float(val.replace(",", "."))
+    elif "." in val:
+        return float(val)
+    return int(val)
+
+
 class RegexMatcher(Matcher):
     regex: Pattern
     value_type: Type
 
-    def __init__(self, pattern: str, value_type: Type = int) -> None:
+    def __init__(self, pattern: str, value_type: Type = int_or_float) -> None:
         self.regex = re.compile(pattern, re.IGNORECASE)
         self.value_type = value_type
 

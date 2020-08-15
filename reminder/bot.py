@@ -42,7 +42,6 @@ class ReminderBot(Plugin):
         return Config
 
     async def start(self) -> None:
-        await super().start()
         self.on_external_config_update()
         self.db = ReminderDatabase(self.database)
         self.reminder_loop_task = asyncio.ensure_future(self.reminder_loop(), loop=self.loop)
@@ -54,7 +53,6 @@ class ReminderBot(Plugin):
         self.base_aliases = tuple(bc) if isinstance(bc, list) else (bc,)
 
     async def stop(self) -> None:
-        await super().stop()
         self.reminder_loop_task.cancel()
 
     async def reminder_loop(self) -> None:
