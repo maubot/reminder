@@ -3,3 +3,6 @@
 base_command:
 - remind
 - reminder
+
+# Default timezone for users who did not set one
+timezone: 'UTC'

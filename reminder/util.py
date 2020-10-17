@@ -35,6 +35,7 @@ if TYPE_CHECKING:
 class Config(BaseProxyConfig):
     def do_update(self, helper: ConfigUpdateHelper) -> None:
         helper.copy("base_command")
+        helper.copy("timezone")
 
 
 class DateArgument(Argument):
@@ -43,7 +44,10 @@ class DateArgument(Argument):
 
     def match(self, val: str, evt: MessageEvent = None, instance: 'ReminderBot' = None
               ) -> Tuple[str, Optional[datetime]]:
-        tz = pytz.UTC
+        try:
+            tz = pytz.timezone(instance.config["timezone"])
+        except (pytz.UnknownTimeZoneError, StopIteration, IndexError):
+            tz = pytz.UTC
         use_locales = [locales["en_iso"]]
         if instance:
             tz = instance.db.get_timezone(evt.sender)
