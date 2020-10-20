@@ -70,7 +70,7 @@ class ReminderDatabase:
             tx.execute(self.timezone.insert().values(user_id=user_id, timezone=tz.zone))
         self.tz_cache[user_id] = tz
 
-    def get_timezone(self, user_id: UserID) -> Optional[pytz.timezone]:
+    def get_timezone(self, user_id: UserID, default_tz: Optional[pytz.timezone]) -> Optional[pytz.timezone]:
         try:
             return self.tz_cache[user_id]
         except KeyError:
@@ -79,7 +79,7 @@ class ReminderDatabase:
             try:
                 self.tz_cache[user_id] = pytz.timezone(next(rows)[0])
             except (pytz.UnknownTimeZoneError, StopIteration, IndexError):
-                self.tz_cache[user_id] = pytz.UTC
+                self.tz_cache[user_id] = default_tz or pytz.UTC
             return self.tz_cache[user_id]
 
     def set_locales(self, user_id: UserID, locales: List[str]) -> None:

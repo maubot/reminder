@@ -51,6 +51,11 @@ class ReminderBot(Plugin):
         bc = self.config["base_command"]
         self.base_command = bc[0] if isinstance(bc, list) else bc
         self.base_aliases = tuple(bc) if isinstance(bc, list) else (bc,)
+        try:
+            self.default_timezone = pytz.timezone(self.config["timezone"])
+        except pytz.UnknownTimeZoneError:
+            self.log.warning(f"Unknown default timezone {self.config['timezone']}")
+            self.default_timezone = pytz.UTC
 
     async def stop(self) -> None:
         self.reminder_loop_task.cancel()

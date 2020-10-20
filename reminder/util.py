@@ -44,13 +44,10 @@ class DateArgument(Argument):
 
     def match(self, val: str, evt: MessageEvent = None, instance: 'ReminderBot' = None
               ) -> Tuple[str, Optional[datetime]]:
-        try:
-            tz = pytz.timezone(instance.config["timezone"])
-        except (pytz.UnknownTimeZoneError, StopIteration, IndexError):
-            tz = pytz.UTC
+        tz = pytz.UTC
         use_locales = [locales["en_iso"]]
         if instance:
-            tz = instance.db.get_timezone(evt.sender)
+            tz = instance.db.get_timezone(evt.sender, instance.default_timezone)
             locale_ids = instance.db.get_locales(evt.sender)
             use_locales = [locales[id] for id in locale_ids if id in locales]
 
