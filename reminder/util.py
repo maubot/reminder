@@ -34,8 +34,8 @@ if TYPE_CHECKING:
 
 class Config(BaseProxyConfig):
     def do_update(self, helper: ConfigUpdateHelper) -> None:
+        helper.copy("default_timezone")
         helper.copy("base_command")
-        helper.copy("timezone")
 
 
 class DateArgument(Argument):

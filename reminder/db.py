@@ -70,7 +70,8 @@ class ReminderDatabase:
             tx.execute(self.timezone.insert().values(user_id=user_id, timezone=tz.zone))
         self.tz_cache[user_id] = tz
 
-    def get_timezone(self, user_id: UserID, default_tz: Optional[pytz.timezone]) -> Optional[pytz.timezone]:
+    def get_timezone(self, user_id: UserID, default_tz: Optional[pytz.timezone] = None
+                     ) -> Optional[pytz.timezone]:
         try:
             return self.tz_cache[user_id]
         except KeyError:
