@@ -45,7 +45,7 @@ class ReminderBot(Plugin):
     async def start(self) -> None:
         self.on_external_config_update()
         self.db = ReminderDatabase(self.database)
-        self.reminder_loop_task = asyncio.ensure_future(self.reminder_loop(), loop=self.loop)
+        self.reminder_loop_task = asyncio.create_task(self.reminder_loop())
 
     def on_external_config_update(self) -> None:
         self.config.load_and_update()
@@ -78,7 +78,7 @@ class ReminderBot(Plugin):
     async def schedule_nearby_reminders(self, now: datetime) -> None:
         until = now + timedelta(minutes=1)
         for reminder in self.db.all_in_range(now, until):
-            asyncio.ensure_future(self.send_reminder(reminder), loop=self.loop)
+            asyncio.create_task(self.send_reminder(reminder))
 
     async def send_reminder(self, reminder: ReminderInfo) -> None:
         try:
@@ -175,7 +175,7 @@ class ReminderBot(Plugin):
         now = datetime.now(tz=pytz.UTC)
         if (rem.date - now).total_seconds() < 60 and now.minute == rem.date.minute:
             self.log.debug(f"Reminder {rem} is in less than a minute, scheduling now...")
-            asyncio.ensure_future(self.send_reminder(rem), loop=self.loop)
+            asyncio.create_task(self.send_reminder(rem))
 
     @remind.subcommand("help", help="Usage instructions")
     async def help(self, evt: MessageEvent) -> None:
