@@ -1,6 +1,10 @@
 # reminder
 A [maubot](https://github.com/maubot/maubot) to remind you about things.
 
+## Hosted instances
+* maunium.net: [@reminder:maunium.net](https://matrix.to/#/@reminder:maunium.net).
+* t2bot.io: https://t2bot.io/reminderbot/
+
 ## Usage
 Use `!remind <date> <message>` to set a reminder. To subscribe to a reminder set by someone else,
 upvote the message with a 👍 reaction. To cancel a reminder, remove the message or reaction.
