@@ -139,3 +139,38 @@ locales["de_de"] = Locale(
                       r"(?:[:.](?P<second>\d{2}))?"
                       r"(?:\s|$)"),
 )
+
+td_sep_nl = r"(?:[\s,]{1,3}(?:en\s)?)?"
+locales["nl_nl"] = Locale(
+    name="Dutch",
+    timedelta=RegexMatcher(rf"(?:in\s)?"                         
+                           rf"(?:(?P<years>{number})\s?jaren?{td_sep_nl})?"
+                           rf"(?:(?P<months>{number})\s?maand(?:en)?{td_sep_nl})?"
+                           rf"(?:(?P<weeks>{number})\s?weken?{td_sep_nl})?"
+                           rf"(?:(?P<days>{number})\s?dag(?:en)?{td_sep_nl})?"
+                           rf"(?:(?P<hours>{number})\s?uren?{td_sep_nl})?"
+                           rf"(?:(?P<minutes>{number})\s?minuten?{td_sep_nl})?"
+                           rf"(?:(?P<seconds>{number})\s?seconden?)?"
+                           r"(?:\s|$)"),
+    date=ShortYearMatcher(
+        r"(?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{2}(?:\d{2})?)(?:\s|$)"),
+    weekday=WeekdayMatcher(pattern=r"(?:vandaag"
+                                   r"|(?:over)?morgen"
+                                   r"|ma(?:andag)?"
+                                   r"|di(?:nsdag)?"
+                                   r"|wo(?:esdag)?"
+                                   r"|do(?:nderdag)?"
+                                   r"|vr(?:ijdag)?"
+                                   r"|za(?:terdag)?"
+                                   r"|zo(?:ndag)?)"
+                                   r"(?:\s|$)",
+                           map={
+                               "van": +0, "mor": +1, "ove": +2, "maa": MO, "din": TU, "woe": WE,
+                               "don": TH, "vri": FR, "zat": SA, "zon": SU,
+                           }, substr=3),
+    time=RegexMatcher(r"\s?(?:om\s)?"
+                      r"(?P<hour>\d{1,2})"
+                      r"[:.](?P<minute>\d{2})"
+                      r"(?:[:.](?P<second>\d{2}))?"
+                      r"(?:\s|$)"),
+)
