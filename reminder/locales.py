@@ -99,7 +99,7 @@ locales["fi_fi"] = Locale(
                                "ma": MO, "ti": TU, "ke": WE, "to": TH, "pe": FR, "la": SA, "su": SU,
                            }, substr=2),
     time=RegexMatcher(r"\s?(?:ke?ll?o\.?\s)?"
-                      r"(?P<hour>\d{2})"
+                      r"(?P<hour>\d{1,2})"
                       r"[:.](?P<minute>\d{2})"
                       r"(?:[:.](?P<second>\d{2}))?"
                       r"(?:\s|$)"),
