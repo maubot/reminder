@@ -59,7 +59,7 @@ time_12_en = TimeMatcher(r"\s?(?:at\s)?"
                          r"(?P<hour>\d{2})"
                          r"(?:[:.](?P<minute>\d{2}))?"
                          r"(?:[:.](?P<second>\d{2}))?"
-                         r"(?:\s(?P<meridiem>a\.?m|p\.?m)\.?)?"
+                         r"(?:\s?(?P<meridiem>a\.?m|p\.?m)\.?)?"
                          r"(?:\s|$)")
 
 locales["en_us"] = locales["en_iso"].replace(
