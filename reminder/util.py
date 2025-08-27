@@ -13,18 +13,18 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Optional, Dict, List, Union, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 from datetime import datetime, timedelta
-from attr import dataclass
 import re
 
-import pytz
+from attr import dataclass
 from dateutil.relativedelta import relativedelta
+import pytz
 
-from mautrix.types import UserID, RoomID, EventID
-from mautrix.util.config import BaseProxyConfig, ConfigUpdateHelper
 from maubot import MessageEvent
 from maubot.handlers.command import Argument, ArgumentSyntaxError
+from mautrix.types import EventID, RoomID, UserID
+from mautrix.util.config import BaseProxyConfig, ConfigUpdateHelper
 
 from .locales import locales
 
@@ -42,8 +42,9 @@ class DateArgument(Argument):
     def __init__(self, name: str, label: str = None, *, required: bool = False):
         super().__init__(name, label=label, required=required, pass_raw=True)
 
-    def match(self, val: str, evt: MessageEvent = None, instance: 'ReminderBot' = None
-              ) -> Tuple[str, Optional[datetime]]:
+    def match(
+        self, val: str, evt: MessageEvent = None, instance: "ReminderBot" = None
+    ) -> Tuple[str, Optional[datetime]]:
         tz = pytz.UTC
         use_locales = [locales["en_iso"]]
         if instance:

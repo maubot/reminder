@@ -13,9 +13,9 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import NamedTuple, Union, Pattern, Match, Dict, Type, Optional, TYPE_CHECKING
-from datetime import datetime
+from typing import TYPE_CHECKING, Dict, Match, NamedTuple, Optional, Pattern, Type, Union
 from abc import ABC, abstractmethod
+from datetime import datetime
 import re
 
 from dateutil.relativedelta import MO
@@ -24,7 +24,6 @@ WeekdayType = type(MO)
 
 if TYPE_CHECKING:
     from typing import TypedDict
-
 
     class RelativeDeltaParams(TypedDict):
         year: int
@@ -52,7 +51,7 @@ if TYPE_CHECKING:
 
 
 class MatcherReturn(NamedTuple):
-    params: 'RelativeDeltaParams'
+    params: "RelativeDeltaParams"
     unconsumed: str
 
 
@@ -81,18 +80,18 @@ class RegexMatcher(Matcher):
     def match(self, val: str) -> Optional[MatcherReturn]:
         match = self.regex.match(val)
         if match and match.end() > 0 and len(match.groups()) > 0:
-            return MatcherReturn(params=self._convert_match(match), unconsumed=val[match.end():])
+            return MatcherReturn(params=self._convert_match(match), unconsumed=val[match.end() :])
         return None
 
-    def _convert_match(self, match: Match) -> 'RelativeDeltaParams':
+    def _convert_match(self, match: Match) -> "RelativeDeltaParams":
         return self._convert_groups(match.groupdict())
 
-    def _convert_groups(self, groups: Dict[str, str]) -> 'RelativeDeltaParams':
+    def _convert_groups(self, groups: Dict[str, str]) -> "RelativeDeltaParams":
         return {key: self.value_type(value) for key, value in groups.items() if value}
 
 
 class TimeMatcher(RegexMatcher):
-    def _convert_match(self, match: Match) -> 'RelativeDeltaParams':
+    def _convert_match(self, match: Match) -> "RelativeDeltaParams":
         groups = match.groupdict()
         try:
             meridiem = groups.pop("meridiem").lower()
@@ -107,7 +106,7 @@ class TimeMatcher(RegexMatcher):
 
 
 class ShortYearMatcher(RegexMatcher):
-    def _convert_match(self, match: Match) -> 'RelativeDeltaParams':
+    def _convert_match(self, match: Match) -> "RelativeDeltaParams":
         params = super()._convert_match(match)
         if params["year"] < 100:
             year = datetime.now().year
@@ -131,10 +130,10 @@ class WeekdayMatcher(Matcher):
     def match(self, val: str) -> Optional[MatcherReturn]:
         match = self.regex.match(val)
         if match and match.end() > 0:
-            weekday = self.map[match.string[:self.substr].lower()]
+            weekday = self.map[match.string[: self.substr].lower()]
             if isinstance(weekday, int):
                 weekday = (datetime.now().weekday() + weekday) % 7
-            return MatcherReturn(params={"weekday": weekday}, unconsumed=val[match.end():])
+            return MatcherReturn(params={"weekday": weekday}, unconsumed=val[match.end() :])
         return None
 
 
@@ -145,18 +144,30 @@ class Locale(Matcher):
     weekday: Matcher
     time: Matcher
 
-    def __init__(self, name: str, timedelta: Matcher, date: Matcher, weekday: Matcher,
-                 time: Matcher) -> None:
+    def __init__(
+        self, name: str, timedelta: Matcher, date: Matcher, weekday: Matcher, time: Matcher
+    ) -> None:
         self.name = name
         self.timedelta = timedelta
         self.date = date
         self.weekday = weekday
         self.time = time
 
-    def replace(self, name: str, timedelta: Matcher = None, date: Matcher = None,
-                weekday: Matcher = None, time: Matcher = None) -> 'Locale':
-        return Locale(name=name, timedelta=timedelta or self.timedelta, date=date or self.date,
-                      weekday=weekday or self.weekday, time=time or self.time)
+    def replace(
+        self,
+        name: str,
+        timedelta: Matcher = None,
+        date: Matcher = None,
+        weekday: Matcher = None,
+        time: Matcher = None,
+    ) -> "Locale":
+        return Locale(
+            name=name,
+            timedelta=timedelta or self.timedelta,
+            date=date or self.date,
+            weekday=weekday or self.weekday,
+            time=time or self.time,
+        )
 
     def match(self, val: str) -> Optional[MatcherReturn]:
         found_delta = self.timedelta.match(val)

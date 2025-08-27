@@ -13,23 +13,31 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Type, Tuple, List
+from typing import List, Tuple, Type
 from datetime import datetime, timedelta
 from html import escape
 import asyncio
 
 import pytz
 
-from mautrix.types import (EventType, RedactionEvent, StateEvent, Format, MessageType,
-                           TextMessageEventContent, ReactionEvent, UserID)
-from mautrix.util.config import BaseProxyConfig
-from mautrix.util import background_task
-from maubot import Plugin, MessageEvent
+from maubot import MessageEvent, Plugin
 from maubot.handlers import command, event
+from mautrix.types import (
+    EventType,
+    Format,
+    MessageType,
+    ReactionEvent,
+    RedactionEvent,
+    StateEvent,
+    TextMessageEventContent,
+    UserID,
+)
+from mautrix.util import background_task
+from mautrix.util.config import BaseProxyConfig
 
 from .db import ReminderDatabase
-from .util import Config, ReminderInfo, DateArgument, parse_timezone, format_time
 from .locales import locales
+from .util import Config, DateArgument, ReminderInfo, format_time, parse_timezone
 
 
 class ReminderBot(Plugin):
@@ -98,11 +106,15 @@ class ReminderBot(Plugin):
         else:
             self.log.debug(f"Sending {reminder} immediately")
         users = " ".join(reminder.users)
-        users_html = " ".join(f"<a href='https://matrix.to/#/{user_id}'>{user_id}</a>"
-                              for user_id in reminder.users)
+        users_html = " ".join(
+            f"<a href='https://matrix.to/#/{user_id}'>{user_id}</a>" for user_id in reminder.users
+        )
         content = TextMessageEventContent(
-            msgtype=MessageType.TEXT, body=f"{users}: {reminder.message}", format=Format.HTML,
-            formatted_body=f"{users_html}: {escape(reminder.message)}")
+            msgtype=MessageType.TEXT,
+            body=f"{users}: {reminder.message}",
+            format=Format.HTML,
+            formatted_body=f"{users_html}: {escape(reminder.message)}",
+        )
         content["xyz.maubot.reminder"] = {
             "id": reminder.id,
             "message": reminder.message,
@@ -113,9 +125,13 @@ class ReminderBot(Plugin):
             content.set_reply(await self.client.get_event(reminder.room_id, reminder.reply_to))
         await self.client.send_message(reminder.room_id, content)
 
-    @command.new(name=lambda self: self.base_command,
-                 aliases=lambda self, alias: alias in self.base_aliases,
-                 help="Create a reminder", require_subcommand=False, arg_fallthrough=False)
+    @command.new(
+        name=lambda self: self.base_command,
+        aliases=lambda self, alias: alias in self.base_aliases,
+        help="Create a reminder",
+        require_subcommand=False,
+        arg_fallthrough=False,
+    )
     @DateArgument("date", required=True)
     @command.argument("message", pass_raw=True, required=False)
     async def remind(self, evt: MessageEvent, date: datetime, message: str) -> None:
@@ -124,22 +140,34 @@ class ReminderBot(Plugin):
         if date < now:
             await evt.reply(f"Sorry, {date} is in the past and I don't have a time machine :(")
             return
-        rem = ReminderInfo(date=date, room_id=evt.room_id, message=message,
-                           reply_to=evt.content.get_reply_to(), users={evt.sender: evt.event_id})
+        rem = ReminderInfo(
+            date=date,
+            room_id=evt.room_id,
+            message=message,
+            reply_to=evt.content.get_reply_to(),
+            users={evt.sender: evt.event_id},
+        )
         await self._remind(evt, rem, now)
 
     @remind.subcommand("for", help="Create a reminder for another user")
     @command.argument("user_id", required=True)
     @DateArgument("date", required=True)
     @command.argument("message", pass_raw=True, required=False)
-    async def remind_for(self, evt: MessageEvent, user_id: UserID, date: datetime, message: str) -> None:
+    async def remind_for(
+        self, evt: MessageEvent, user_id: UserID, date: datetime, message: str
+    ) -> None:
         date = date.replace(microsecond=0)
         now = datetime.now(tz=pytz.UTC).replace(microsecond=0)
         if date < now:
             await evt.reply(f"Sorry, {date} is in the past and I don't have a time machine :(")
             return
-        rem = ReminderInfo(date=date, room_id=evt.room_id, message=message,
-                           reply_to=evt.event_id, users={user_id: evt.event_id})
+        rem = ReminderInfo(
+            date=date,
+            room_id=evt.room_id,
+            message=message,
+            reply_to=evt.event_id,
+            users={user_id: evt.event_id},
+        )
         await self._remind(evt, rem, now, recipient=user_id.split(":")[0].removeprefix("@"))
 
     @remind.subcommand("reschedule", help="Reschedule a reminder you got", aliases=("again",))
@@ -157,15 +185,26 @@ class ReminderBot(Plugin):
         reply_to = await self.client.get_event(evt.room_id, reply_to_id)
         try:
             reminder_info = reply_to.content["xyz.maubot.reminder"]
-            rem = ReminderInfo(date=date, room_id=evt.room_id, message=reminder_info["message"],
-                               reply_to=reminder_info["reply_to"], users={evt.sender: evt.event_id})
+            rem = ReminderInfo(
+                date=date,
+                room_id=evt.room_id,
+                message=reminder_info["message"],
+                reply_to=reminder_info["reply_to"],
+                users={evt.sender: evt.event_id},
+            )
         except KeyError:
             await evt.reply("That doesn't look like a valid reminder event.")
             return
         await self._remind(evt, rem, now, again=True)
 
-    async def _remind(self, evt: MessageEvent, rem: ReminderInfo, now: datetime, again: bool = False,
-                      recipient: str = "you") -> None:
+    async def _remind(
+        self,
+        evt: MessageEvent,
+        rem: ReminderInfo,
+        now: datetime,
+        again: bool = False,
+        recipient: str = "you",
+    ) -> None:
         if rem.date == now:
             await self.send_reminder(rem)
             return
@@ -183,8 +222,10 @@ class ReminderBot(Plugin):
             rem.message = "ping"
         if again:
             remind_type += " again"
-        msg = (f"I'll {remind_type} {self.format_time(evt.sender, rem)}.\n\n"
-               f"(others can \U0001F44D this message to get pinged too)")
+        msg = (
+            f"I'll {remind_type} {self.format_time(evt.sender, rem)}.\n\n"
+            f"(others can \U0001f44d this message to get pinged too)"
+        )
         rem.event_id = await evt.reply(msg)
         self.db.insert(rem)
         now = datetime.now(tz=pytz.UTC)
@@ -194,18 +235,20 @@ class ReminderBot(Plugin):
 
     @remind.subcommand("help", help="Usage instructions")
     async def help(self, evt: MessageEvent) -> None:
-        await evt.reply(f"Maubot [Reminder](https://github.com/maubot/reminder) plugin.\n\n"
-                        f"* !{self.base_command} <date> <message> - Add a reminder\n"
-                        f"* !{self.base_command} again <date> - Reply to a reminder to reschedule it\n"
-                        f"* !{self.base_command} list - Get a list of your reminders\n"
-                        f"* !{self.base_command} tz <timezone> - Set your time zone\n"
-                        f"* !{self.base_command} locale <locale> - Set your locale\n"
-                        f"* !{self.base_command} locales - List available locales\n\n"
-                        "<date> can be a time delta (e.g. `2 days 1.5 hours` or `friday at 15:00`) "
-                        "or an absolute date (e.g. `2020-03-27 15:00`)\n\n"
-                        "To get mentioned by a reminder added by someone else, upvote the message "
-                        "by reacting with \U0001F44D.\n\n"
-                        "To cancel a reminder, remove the message or reaction.")
+        await evt.reply(
+            f"Maubot [Reminder](https://github.com/maubot/reminder) plugin.\n\n"
+            f"* !{self.base_command} <date> <message> - Add a reminder\n"
+            f"* !{self.base_command} again <date> - Reply to a reminder to reschedule it\n"
+            f"* !{self.base_command} list - Get a list of your reminders\n"
+            f"* !{self.base_command} tz <timezone> - Set your time zone\n"
+            f"* !{self.base_command} locale <locale> - Set your locale\n"
+            f"* !{self.base_command} locales - List available locales\n\n"
+            "<date> can be a time delta (e.g. `2 days 1.5 hours` or `friday at 15:00`) "
+            "or an absolute date (e.g. `2020-03-27 15:00`)\n\n"
+            "To get mentioned by a reminder added by someone else, upvote the message "
+            "by reacting with \U0001f44d.\n\n"
+            "To cancel a reminder, remove the message or reaction."
+        )
 
     @remind.subcommand("list", help="List your reminders")
     @command.argument("all", required=False)
@@ -224,8 +267,10 @@ class ReminderBot(Plugin):
             else:
                 return f'"{rem.message}"'
 
-        reminders_str = "\n".join(f"* {format_rem(reminder)} {self.format_time(evt.sender, reminder)}"
-                                  for reminder in self.db.all_for_user(evt.sender, room_id=room_id))
+        reminders_str = "\n".join(
+            f"* {format_rem(reminder)} {self.format_time(evt.sender, reminder)}"
+            for reminder in self.db.all_for_user(evt.sender, room_id=room_id)
+        )
         message = "upcoming reminders"
         if room_id:
             message += " in this room"
@@ -243,9 +288,12 @@ class ReminderBot(Plugin):
             language, country = key.split("_")
             return f"{language.lower()}_{country.upper()}"
 
-        await evt.reply("Available locales:\n\n" +
-                        "\n".join(f"* `{_format_key(key)}` - {locale.name}"
-                                  for key, locale in locales.items()))
+        await evt.reply(
+            "Available locales:\n\n"
+            + "\n".join(
+                f"* `{_format_key(key)}` - {locale.name}" for key, locale in locales.items()
+            )
+        )
 
     @staticmethod
     def _fmt_locales(locale_ids: List[str]) -> str:
@@ -280,9 +328,12 @@ class ReminderBot(Plugin):
         self.db.set_timezone(evt.sender, timezone)
         await evt.reply(f"Set your timezone to {timezone.zone}")
 
-    @command.passive(regex=r"(?:\U0001F44D[\U0001F3FB-\U0001F3FF]?)",
-                     field=lambda evt: evt.content.relates_to.key,
-                     event_type=EventType.REACTION, msgtypes=None)
+    @command.passive(
+        regex=r"(?:\U0001F44D[\U0001F3FB-\U0001F3FF]?)",
+        field=lambda evt: evt.content.relates_to.key,
+        event_type=EventType.REACTION,
+        msgtypes=None,
+    )
     async def subscribe_react(self, evt: ReactionEvent, _: Tuple[str]) -> None:
         reminder = self.db.get_by_event_id(evt.content.relates_to.event_id)
         if reminder:
