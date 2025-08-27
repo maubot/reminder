@@ -128,6 +128,20 @@ class ReminderBot(Plugin):
                            reply_to=evt.content.get_reply_to(), users={evt.sender: evt.event_id})
         await self._remind(evt, rem, now)
 
+    @remind.subcommand("for", help="Create a reminder for another user")
+    @command.argument("user_id", required=True)
+    @DateArgument("date", required=True)
+    @command.argument("message", pass_raw=True, required=False)
+    async def remind_for(self, evt: MessageEvent, user_id: UserID, date: datetime, message: str) -> None:
+        date = date.replace(microsecond=0)
+        now = datetime.now(tz=pytz.UTC).replace(microsecond=0)
+        if date < now:
+            await evt.reply(f"Sorry, {date} is in the past and I don't have a time machine :(")
+            return
+        rem = ReminderInfo(date=date, room_id=evt.room_id, message=message,
+                           reply_to=evt.event_id, users={user_id: evt.event_id})
+        await self._remind(evt, rem, now, recipient=user_id.split(":")[0].removeprefix("@"))
+
     @remind.subcommand("reschedule", help="Reschedule a reminder you got", aliases=("again",))
     @DateArgument("date", required=True)
     async def reschedule(self, evt: MessageEvent, date: datetime) -> None:
@@ -150,12 +164,12 @@ class ReminderBot(Plugin):
             return
         await self._remind(evt, rem, now, again=True)
 
-    async def _remind(self, evt: MessageEvent, rem: ReminderInfo, now: datetime, again: bool = False
-                      ) -> None:
+    async def _remind(self, evt: MessageEvent, rem: ReminderInfo, now: datetime, again: bool = False,
+                      recipient: str = "you") -> None:
         if rem.date == now:
             await self.send_reminder(rem)
             return
-        remind_type = "remind you "
+        remind_type = f"remind {recipient} "
         if rem.reply_to:
             evt_link = f"[event](https://matrix.to/#/{rem.room_id}/{rem.reply_to})"
             if rem.message:
