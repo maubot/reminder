@@ -150,7 +150,7 @@ class ReminderBot(Plugin):
         await self._remind(evt, rem, now)
 
     @remind.subcommand("for", help="Create a reminder for another user")
-    @command.argument("user_id", required=True)
+    @command.argument("user_id", required=True, matches="@[^:]*:[a-zA-Z0-9.-]{1,255}(?::\d{1,5})?")
     @DateArgument("date", required=True)
     @command.argument("message", pass_raw=True, required=False)
     async def remind_for(
