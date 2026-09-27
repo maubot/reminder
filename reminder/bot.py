@@ -208,6 +208,8 @@ class ReminderBot(Plugin):
         if rem.date == now:
             await self.send_reminder(rem)
             return
+        if rem.date.year > now.year + 125:
+            recipient = "your descendants" if recipient == "you" else f"{recipient}'s descendants"
         remind_type = f"remind {recipient} "
         if rem.reply_to:
             evt_link = f"[event](https://matrix.to/#/{rem.room_id}/{rem.reply_to})"
